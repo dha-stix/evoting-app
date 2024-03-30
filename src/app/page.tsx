@@ -14,13 +14,20 @@ export default function Home() {
 				className='px-6 rounded mb-4 py-4 font-lg bg-green-500 text-[#FBF6EE]'
 			>
 				Admin Login
-      </Link>
-      
-      <Link
+			</Link>
+
+			<Link
 				href='/vote/login'
 				className='px-6 rounded font-lg mb-6 py-4 bg-green-700 text-[#FBF6EE]'
 			>
 				Voters&apos; Election Page
+			</Link>
+
+			<Link
+				href='/vote/card'
+				className='px-6 rounded font-lg mb-6 py-4 bg-green-700 text-[#FBF6EE]'
+			>
+				Print Voter&apos;s Card
 			</Link>
 		</main>
 	);

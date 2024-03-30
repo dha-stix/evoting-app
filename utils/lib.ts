@@ -77,3 +77,4 @@ export const ondo_lgas: LGA[] = [
         "name": "Owo"
     }
 ]
+
