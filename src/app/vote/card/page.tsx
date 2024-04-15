@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import PrintCardVerify from "@/modals/PrintCardVerify";
+import PrintCardVerify from "@/app/modals/PrintCardVerify";
 
 export default function Home() {
 	const [email, setEmail] = useState<string>("");

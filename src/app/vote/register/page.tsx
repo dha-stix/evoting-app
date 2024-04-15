@@ -1,15 +1,11 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import EmailVerify from "@/modals/EmailVerify";
+import EmailVerify from "@/app/modals/EmailVerify";
 
 export default function Home() {
 	const [ondoLGAs, setOndoLGAs] = useState([]);
 	const [allStates, setAllStates] = useState<string[]>([]);
 	const [origins, setOrigins] = useState({ state: "", lga: "" });
-<<<<<<< HEAD
-=======
-	const [originLGA, setOriginLGA] = useState<string>("");
->>>>>>> 84d61fabda6d69936c50d6c8c511f163b4c80d90
 	const [names, setNames] = useState({
 		firstName: "",
 		lastName: "",
@@ -20,7 +16,6 @@ export default function Home() {
 	const [occupation, setOccupation] = useState<string>("");
 	const [allLGA, setAllLGA] = useState<string[]>([]);
 	const [nin, setNin] = useState<string>("");
-<<<<<<< HEAD
 	const [imageData, setImageData] = useState<string>("");
 	const [homeAddr, setHomeAddr] = useState<string>("")
 	const [addrState, setAddrState] = useState<string>("")
@@ -64,27 +59,6 @@ export default function Home() {
 		
 		
 	 }
-=======
-	const [address, setAddress] = useState({
-		home: "",
-		state: "",
-		lga: "",
-		zone: "",
-	});
-	const videoRef = useRef<HTMLVideoElement | any>();
-	const photoRef = useRef<HTMLCanvasElement | any>();
-
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		if (originLGA === "Select" || originLGA === "Select")
-			return alert("Check the state and LGA of origin");
-		if (!Number(nin) || nin.length !== 11) {
-			return alert("NIN invalid!, please try again");
-		}
-
-		console.log({ names, email, dob, occupation, nin, address });
-	};
->>>>>>> 84d61fabda6d69936c50d6c8c511f163b4c80d90
 
 	const getUserCamera = () => {
 		navigator.mediaDevices
@@ -117,17 +91,9 @@ export default function Home() {
 			const ctx = photo.getContext("2d");
 			if (ctx) {
 				ctx.drawImage(video, 0, 0, photo.width, photo.height);
-<<<<<<< HEAD
 				const imageDataURL = photo.toDataURL("image/jpeg");
 				const base64Data = imageDataURL.split(",")[1];
 				setImageData(imageDataURL);
-=======
-				// const imageData = ctx.getImageData(0, 0, width, height);
-				const imageDataURL = photo.toDataURL("image/jpeg");
-				const base64Data = imageDataURL.split(",")[1];
-				console.log({ base64Data });
-				console.log({ imageDataURL });
->>>>>>> 84d61fabda6d69936c50d6c8c511f163b4c80d90
 			}
 		}
 	};
@@ -161,7 +127,7 @@ export default function Home() {
 	}, [origins]);
 
 	return (
-		<main className='p-8 flex min-h-screen flex-col w-full'>
+		<main className='p-8 flex min-h-screen flex-col w-full relative'>
 			<h2 className='text-2xl md:text-left text-center font-bold mb-8 text-green-700'>
 				Voter&apos;s Registration Form
 			</h2>
@@ -211,10 +177,6 @@ export default function Home() {
 							className='w-full border-[1px] px-6 py-3 border-gray-500 mb-3'
 							id='otherName'
 							type='text'
-<<<<<<< HEAD
-=======
-							required
->>>>>>> 84d61fabda6d69936c50d6c8c511f163b4c80d90
 							value={names.otherName}
 							onChange={(e) =>
 								setNames({ ...names, otherName: e.target.value })
@@ -242,10 +204,7 @@ export default function Home() {
 								className='w-full border-[1px] px-6 py-3 border-gray-500 mb-3'
 								id='dob'
 								type='date'
-<<<<<<< HEAD
 								max={`${new Date().getFullYear() - 18}-12-31`}
-=======
->>>>>>> 84d61fabda6d69936c50d6c8c511f163b4c80d90
 								required
 								value={dob}
 								onChange={(e) => setDOB(e.target.value)}
@@ -326,13 +285,8 @@ export default function Home() {
 						id='homeAddress'
 						type='text'
 						required
-<<<<<<< HEAD
 						value={homeAddr}
 						onChange={(e) => setHomeAddr(e.target.value)}
-=======
-						value={address.home}
-						onChange={(e) => setAddress({ ...address, home: e.target.value })}
->>>>>>> 84d61fabda6d69936c50d6c8c511f163b4c80d90
 					/>
 					<div className='w-full flex md:flex-row flex-col mb-8'>
 						<section className='lg:w-1/2 w-full md:px-3'>
@@ -341,15 +295,8 @@ export default function Home() {
 								className='w-full border-[1px] px-6 py-3 border-gray-500 mb-3'
 								id='res_state'
 								required
-<<<<<<< HEAD
 								value={addrState}
 								onChange={(e) => setAddrState(e.target.value)}
-=======
-								value={address.state}
-								onChange={(e) =>
-									setAddress({ ...address, state: e.target.value })
-								}
->>>>>>> 84d61fabda6d69936c50d6c8c511f163b4c80d90
 							>
 								<option value=''>Select</option>
 								<option value='ondo'>Ondo State</option>
@@ -362,15 +309,8 @@ export default function Home() {
 								className='w-full border-[1px] px-6 py-3 border-gray-500 mb-3'
 								id='res_lga'
 								required
-<<<<<<< HEAD
 								value={addrLGA}
 								onChange={(e) => setAddrLGA(e.target.value)}
-=======
-								value={address.lga}
-								onChange={(e) =>
-									setAddress({ ...address, lga: e.target.value })
-								}
->>>>>>> 84d61fabda6d69936c50d6c8c511f163b4c80d90
 							>
 								{ondoLGAs.map((lga) => (
 									<option key={lga} value={lga}>
@@ -386,15 +326,8 @@ export default function Home() {
 								required
 								className='w-full border-[1px] px-6 py-3 border-gray-500 mb-3'
 								id='geo_zone'
-<<<<<<< HEAD
 								value={addrZone}
 								onChange={(e) => setAddrZone(e.target.value)}
-=======
-								value={address.zone}
-								onChange={(e) =>
-									setAddress({ ...address, zone: e.target.value })
-								}
->>>>>>> 84d61fabda6d69936c50d6c8c511f163b4c80d90
 							>
 								<option value=''>Select</option>
 								<option value='SW'>South West</option>
