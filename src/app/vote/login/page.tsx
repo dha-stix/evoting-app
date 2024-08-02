@@ -1,51 +1,65 @@
 "use client";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { votersFormSchema } from "@/app/utils/lib";
 import { useState } from "react";
+import * as z from "zod";
+import ValidateVoterForm from "@/app/components/voter/ValidateVoterForm";
+import ValidateImageForm from "@/app/components/voter/ValidateImageForm";
 
-export default function Home() {
-	const [vin, setVin] = useState<string>("");
-	const [email, setEmail] = useState<string>("");
-	const [lastName, setLastName] = useState<string>("");
+type FormField = z.infer<typeof votersFormSchema>;
+
+export default function Login() {
+	const [submitting, setSubmitting] = useState<boolean>(false);
+	const [confirmImage, setConfirmImage] = useState<boolean>(false);
+
+	const { handleSubmit, register, formState, reset } = useForm<FormField>({
+		resolver: zodResolver(votersFormSchema),
+	});
+	const { errors } = formState;
+
+	const postData = async (data: FormField) => { 
+		try {
+			const request = await fetch("/api/vote/verify", {
+				method: "POST",
+				body: JSON.stringify(data),
+				headers: {
+					"Content-Type": "application/json",
+				},
+			});
+			const response = await request.json();
+			if (response.user || response.success) {
+				setSubmitting(false);
+				reset();
+				setConfirmImage(true);
+			} else {
+				alert(response.message);
+			}
+			
+		} catch (error) { 
+			console.error(error);
+		}
+	}
+
+	const onSubmit: SubmitHandler<FormField> = (data) => {
+		setSubmitting(true);
+		postData(data);
+	
+	};
+
 
 	return (
 		<main className='p-8 flex items-center justify-center min-h-screen flex-col w-full'>
-			<form className='flex flex-col md:w-2/3 w-full'>
-				<h1 className='text-2xl font-bold text-green-700 text-center'>
-					Voters&apos; Page
-				</h1>
-				<p className=' mb-8 text-center opacity-60 text-sm'>
-					You can only log into the application during an election.
-				</p>
-				<label htmlFor='vin'>Voter&apos;s Identification Number (VIN)</label>
-				<input
-					type='text'
-					id='vin'
-					value={vin}
-					onChange={(e) => setVin(e.target.value)}
-					className='border-[1px] border-gray-600 rounded-md p-3 w-full mb-6'
-				/>
+			{confirmImage ? (
+				<ValidateImageForm />
+				
 
-				<label htmlFor='email'>Email Address</label>
-				<input
-					type='email'
-					id='email'
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					className='border-[1px] border-gray-600 rounded-md p-3 w-full mb-6'
-				/>
+			): (
+					<ValidateVoterForm handleSubmit={handleSubmit} register={register} errors={errors} onSubmit={onSubmit} submitting={submitting} />
+					
+			)}
+			
 
-				<label htmlFor='lastname'>Last Name</label>
-				<input
-					type='text'
-					id='lastname'
-					value={lastName}
-					onChange={(e) => setLastName(e.target.value)}
-					className='border-[1px] border-gray-600 rounded-md p-3 w-full mb-6'
-				/>
-
-				<button className='bg-green-700 text-green-100 p-4 font-bold rounded'>
-					Proceeed
-				</button>
-			</form>
 		</main>
 	);
 }

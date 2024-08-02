@@ -7,3 +7,32 @@
 	margin: 0;
 	padding: 0;
 }
+
+tr,
+td,
+th {
+	border: 1px solid #ddd;
+	border-radius: 2px;
+	padding: 10px;
+	text-align: left;
+	background-color: #fff;
+}
+
+table {
+	box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+th {
+	background-color: #6ed293;
+}
+.card {
+	background-image: url("../app/images/background.jpg");
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+}
+.passport {
+	background-image: url("../app/images/passport.jpg");
+	background-size: cover;
+	background-position: top;
+	background-repeat: no-repeat;
+}

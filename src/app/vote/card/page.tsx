@@ -1,63 +1,100 @@
 "use client";
-import React, { useState } from "react";
-import PrintCardVerify from "@/app/modals/PrintCardVerify";
+import { useState } from "react";
+import {  printCardSchema } from "@/app/utils/lib";
+import { useForm, SubmitHandler } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
+import * as z from "zod";
+import CardContent from "@/app/components/voter/CardContent";
 
-export default function Home() {
-	const [email, setEmail] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [disableBtn, setDisableBtn] = useState<boolean>(false)
-  const [openModal, setOpenModal] = useState<boolean>(false)
+type FormField = z.infer<typeof printCardSchema>;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    sendCredentialsToServer()
+export default function VoteCard() {
+    const [showForm, setShowForm] = useState<boolean>(true);
+    const [buttonClicked, setButtonClicked] = useState<boolean>(false);
+    const [cardData, setCardData] = useState<CardDetails | null>(null);
+	const { handleSubmit, register, formState } = useForm<FormField>({
+		resolver: zodResolver(printCardSchema),
+	});
 
-  }
-  const sendCredentialsToServer = async () => {
-    try { 
-      const request = await fetch(`/api/vote/verify?email=${email}&lastName=${lastName}`)
-      const response = await request.json()
-      if (response.success) {
-        setDisableBtn(true)
-        setOpenModal(true)
-      }
-    } catch (err) {
-      console.error(err)
+    const onSubmit: SubmitHandler<FormField> = (data) => {
+        setButtonClicked(true);
+        postData(data);
+
+    };
+    
+    const postData = async (data: FormField) => { 
+        try {
+            const response = await fetch("/api/vote/card", {
+                method: "POST",
+                body: JSON.stringify(data),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+
+            if (response.ok) {
+                const { message, data } = await response.json();
+                setShowForm(false);
+                console.log({ message, data });
+                setCardData(data);
+               
+            }
+        }catch (error) {
+            console.error("An error occurred", error);
+            alert("Incorrect credentials, please try again");
+        }
     }
-  }
 
+    return (
+        <>
+            {showForm ? (
 
-	return (
-		<main className='p-8 flex items-center justify-center min-h-screen flex-col w-full'>
-			<form className='flex flex-col md:w-2/3 w-full' onSubmit={handleSubmit}>
-				<h1 className='text-2xl font-bold mb-8 text-green-700 text-center'>
-					Print Voter&apos;s Card
-				</h1>
-				<label htmlFor='email'>Email Address</label>
-				<input
-					type='email'
-					id='email'
-          value={email}
-          required
-					onChange={(e) => setEmail(e.target.value)}
-					className='border-[1px] border-gray-600 rounded-md p-3 w-full mb-6'
-				/>
-        
-        <label htmlFor='lastname'>Last Name</label>
+                	<main className='w-full h-screen flex flex-col items-center justify-center'>
+			<h2 className='font-semibold text-2xl mb-3'>Print Voter&apos;s Card</h2>
+			<form
+				className='md:w-2/3 w-full p-3'
+				onSubmit={handleSubmit(onSubmit)}
+				noValidate
+			>
+
+				<label
+					htmlFor='vin'
+					className='block text-sm font-medium text-gray-700 mt-3'
+				>
+					Voter Identification Number
+				</label>
 				<input
 					type='text'
-          id='lastname'
-          required
-					value={lastName}
-					onChange={(e) => setLastName(e.target.value)}
-					className='border-[1px] border-gray-600 rounded-md p-3 w-full mb-6'
+					{...register("vin")}
+					id='vin'
+					className='mt-1 p-2 border border-gray-300 rounded-md w-full'
+					placeholder='Enter your VIN'
 				/>
 
-				<button className='bg-green-700 text-green-100 p-4 font-bold rounded' disabled={disableBtn}>
-					{disableBtn ? "Code Sent!" : "Print Voters Card"}
-				</button>
-      </form>
-      <PrintCardVerify isOpen={openModal} setIsOpen={setOpenModal} lastName={lastName} email={email} />
-		</main>
+				<p className='text-red-500 text-xs'>{formState.errors?.vin?.message}</p>
+
+				<button
+                            type='submit'
+                            disabled={buttonClicked}
+					className='w-full mb-2 font-semibold bg-green-500 text-white p-3 mt-3 rounded-md'
+				>
+					{buttonClicked ? "Printing..." : "Print Voter Card"}
+                </button>
+                
+				<Link
+					href='/vote/register'
+					className='text-center block text-sm hover:underline '
+				>
+					Register as a Voter
+				</Link>
+			</form>
+                </main>
+                
+            ) : (
+                    <CardContent cardData={cardData} />
+            )}
+	
+            </>
 	);
 }

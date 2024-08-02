@@ -20,15 +20,10 @@ export default function Home() {
 				href='/vote/login'
 				className='px-6 rounded font-lg mb-6 py-4 bg-green-700 text-[#FBF6EE]'
 			>
-				Voters&apos; Election Page
+				Voters&apos; Election Login
 			</Link>
 
-			<Link
-				href='/vote/card'
-				className='px-6 rounded font-lg mb-6 py-4 bg-green-700 text-[#FBF6EE]'
-			>
-				Print Voter&apos;s Card
-			</Link>
+	
 		</main>
 	);
 }
