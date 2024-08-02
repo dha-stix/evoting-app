@@ -61,7 +61,7 @@ export default function Login() {
 					type='email'
 					id='email'
 					{...register("email")}
-					placeholder="asaoludavid234@gmail.com"
+					placeholder="admin@user.com"
 					className='border-[1px] border-gray-600 rounded-md p-3 w-full '
 				/>
 				<p className='text-red-500 text-xs'>{errors.email?.message}</p>
