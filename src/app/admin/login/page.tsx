@@ -5,8 +5,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import * as z from "zod";
-import Cryptr from "cryptr";
-const cryptr = new Cryptr(process.env.NEXT_PUBLIC_SECRET!);
 
 type FormField = z.infer<typeof adminFormSchema>;
 
@@ -21,23 +19,33 @@ export default function Login() {
 
 	const onSubmit: SubmitHandler<FormField> = data => { 
 		setButtonClicked(true);
-		const encryptedPassword = cryptr.encrypt(data.password);
-		const encryptedEmail = cryptr.encrypt(data.email);
-		postAuthData({email: encryptedEmail, password: encryptedPassword});
+		postAuthData(data);
 	}
 
 	const postAuthData = async (data: FormField) => { 
-		const response = await fetch("/api/users", {
+		try {
+			const response = await fetch("/api/users", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify(data),
 		});
-		const result = await response.json();
-		sessionStorage.setItem("token", result.data);
-		setButtonClicked(false);
-		router.push("/admin/dashboard");
+			const result = await response.json();
+			if (!result.success) { 
+				alert(result.message);
+				setButtonClicked(false);
+				return;
+			}
+			sessionStorage.setItem("token", JSON.stringify(result.data));
+			setButtonClicked(false);
+			router.push("/admin/dashboard");
+
+		}catch (error) {
+			console.error("An error occurred", error);
+			setButtonClicked(false);
+		}
+		
 	}
 	
 	return (

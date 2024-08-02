@@ -14,16 +14,13 @@ export default function Dashboard() {
 
 const authenticateUser = useCallback(async () => {
       const token = sessionStorage.getItem("token");
-      if (!token) {
+      if (!token || token === undefined) {
         return router.push("/admin/login");
       }
-      const decryptedData = cryptr.decrypt(token);
-      const data = JSON.parse(decryptedData);
-      if(!data.session) {
-        return router.push("/admin/login");
-      }
-  setEmail(data.user.email);
-  setLoading(false)
+  console.log(token)
+      const data = JSON.parse(token!);
+      setEmail(data.user.email);
+      setLoading(false)
 }, [router]);
   
   useEffect(() => {

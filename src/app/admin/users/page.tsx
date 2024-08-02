@@ -1,11 +1,8 @@
 "use client"
 import SideNav from "@/app/components/admin/SideNav";
 import TopNav from "@/app/components/admin/TopNav";
-import DashboardContent from "@/app/components/admin/CandidateContent";
 import { useCallback, useEffect, useState } from "react";
-import Cryptr from "cryptr";
 import { useRouter } from "next/navigation";
-const cryptr = new Cryptr(process.env.NEXT_PUBLIC_SECRET!);
 
 export default function Users() {
     const router = useRouter();
@@ -17,11 +14,7 @@ const authenticateUser = useCallback(async () => {
       if (!token) {
         return router.push("/admin/login");
       }
-      const decryptedData = cryptr.decrypt(token);
-      const data = JSON.parse(decryptedData);
-      if(!data.session) {
-        return router.push("/admin/login");
-      }
+  const data = JSON.parse(token!);
   setEmail(data.user.email);
   setLoading(false)
 }, [router]);
