@@ -5,74 +5,92 @@ export const ondo_lgas: LGA[] = [
 	{
 		id: "akoko_north_east",
 		name: "Akoko North-East",
+		location: "north",
 	},
 	{
 		id: "akoko_north_west",
 		name: "Akoko North-West",
+		location: "north",
 	},
 	{
 		id: "akoko_south_east",
 		name: "Akoko South-East",
+		location: "north",
 	},
 	{
 		id: "akoko_south_west",
 		name: "Akoko South-West",
+		location: "north",
 	},
 	{
 		id: "akure_north",
 		name: "Akure North",
+		location: "central",
 	},
 	{
 		id: "akure_south",
 		name: "Akure South",
+		location: "central",
 	},
 	{
 		id: "ese_odo",
 		name: "Ese Odo",
+		location: "south",
 	},
 	{
 		id: "idanre",
 		name: "Idanre",
+		location: "central",
 	},
 	{
 		id: "ifedore",
 		name: "Ifedore",
+		location: "central",
 	},
 	{
 		id: "ilaje",
 		name: "Ilaje",
+		location: "south",
 	},
 	{
 		id: "ile_oluji_okeigbo",
 		name: "Ile Oluji/Okeigbo",
+		location: "central",
 	},
 	{
 		id: "irele",
 		name: "Irele",
+		location: "south",		
 	},
 	{
 		id: "odigbo",
 		name: "Odigbo",
+		location: "south",
 	},
 	{
 		id: "okitipupa",
 		name: "Okitipupa",
+		location: "south",
 	},
 	{
 		id: "ondo_east",
 		name: "Ondo East",
+		location: "central",
 	},
 	{
 		id: "ondo_west",
 		name: "Ondo West",
+		location: "central",
 	},
 	{
 		id: "ose",
 		name: "Ose",
+		location: "north",
 	},
 	{
 		id: "owo",
 		name: "Owo",
+		location: "north",
 	},
 ];
 
@@ -264,3 +282,70 @@ export const ondoSenatorialDistricts: District[] = [
 
 ]
 
+export const electionTypes: Election[] = [
+	{
+		id: 1,
+		name: "Senatorial Election",
+		type: "sen",
+		status: "Not Started",
+		active: false,
+		description: "This is the description for the senatorial election",
+	},
+	{
+		id: 2,
+		name: "Governorship Election",
+		type: "gov",
+		status: "Not Started",
+		active: false,
+		description: "This is the description for the governorship election",
+	},
+]
+
+export const capitalize = (word: string | null) => {
+	if (!word) return "";
+	const result = word[0].toUpperCase() + word.slice(1);
+	return ` (Ondo ${result}) `;
+}
+
+export const determineLGA = (lga: string): string => { 
+	const lgas = ondo_lgas.filter((l) => l.name === lga);
+	if (lgas.length === 0 || !lgas[0].location) return "";
+	return lgas[0].location;
+}
+
+export const  formatDate = (dateString: string) : string => {
+  const date = new Date(dateString);
+
+  const day = date.getDate();
+  const month = date.toLocaleString('default', { month: 'long' });
+  const year = date.getFullYear();
+
+  let hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'pm' : 'am';
+
+  hours = hours % 12 || 12; // Convert to 12-hour format
+
+  const daySuffix = ['th', 'st', 'nd', 'rd'];
+  const relevantSuffix = daySuffix[(day % 10 > 3 || Math.floor((day % 100) / 10) === 1) ? 0 : day % 10];
+
+  return `${day}${relevantSuffix} ${month}, ${year} at ${hours}:${minutes}${ampm}`;
+}
+
+export const getWinner = (electionDataString: string): string | null => {
+  // Parse the JSON string
+  const electionData: Result[] = JSON.parse(electionDataString);
+
+  // Return null if the array is empty
+  if (electionData.length === 0) {
+    return null;
+  }
+
+  // Find the object with the highest vote count
+  const winner = electionData.reduce((max, candidate) =>
+    candidate.vote_count > max.vote_count ? candidate : max
+  );
+
+  // Return the name of the candidate with the highest vote count
+  return `${winner.name} (${winner.party})`;
+}

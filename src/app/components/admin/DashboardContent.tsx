@@ -3,7 +3,13 @@ import image from "@/app/images/dashvote.jpeg"
 import Image from "next/image";
 import Link from "next/link";
 
-export default function DashboardContent() {
+interface Props { 
+    numVoters: number;
+    numParties: number;
+    numElections: number
+}
+
+export default function DashboardContent({numVoters, numParties, numElections}: Props) {
     return (
         <div>
         <div className="w-full md:flex-row flex-col rounded-sm md:space-x-4 md:space-y-0 space-y-4 flex items-center justify-between mb-6">
@@ -13,7 +19,7 @@ export default function DashboardContent() {
                     <FaCaretUp className="text-red-500"/>
                 </span>
                 
-                <h2 className="font-bold text-3xl">150,000</h2>
+                <h2 className="font-bold text-3xl">{numVoters}</h2>
             </div>
             <div className="md:w-1/3 w-full bg-green-100 rounded-md shadow py-8 flex flex-col justify-center px-4">
                    <span className="flex items-center mb-3">
@@ -21,7 +27,7 @@ export default function DashboardContent() {
                     <FaCaretUp className="text-green-500"/>
                 </span>
                 
-                <h2 className="font-bold text-3xl">19</h2>
+                <h2 className="font-bold text-3xl">{numParties}</h2>
             </div>
 
             <div className="md:w-1/3 w-full bg-blue-100 rounded-md shadow py-8 flex flex-col justify-center px-4">
@@ -30,7 +36,7 @@ export default function DashboardContent() {
                     <FaCaretUp className="text-blue-500"/>
                 </span>
                 
-                <h2 className="font-bold text-3xl">5</h2>
+                <h2 className="font-bold text-3xl">{numElections}</h2>
             </div>
             </div>
             <section className="w-full bg-gray-50 shadow rounded-sm flex md:flex-row flex-col items-center justify-between p-8">

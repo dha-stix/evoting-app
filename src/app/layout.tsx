@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { PT_Sans} from "next/font/google";
+import { Inclusive_Sans } from "next/font/google";
 import { Providers } from './providers'
 import "./globals.css";
 
-const sora = PT_Sans({ subsets: ["latin"], weight: ["400","700"]});
+const inter = Inclusive_Sans({ subsets: ["latin"], weight: ["400"] });
 
 export const metadata: Metadata = {
   title: "E-voting System - Final Year Project",
@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={sora.className}>
+      <body className={inter.className}>
         <Providers>{children}</Providers>
       </body>
     </html>

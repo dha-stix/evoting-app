@@ -114,3 +114,27 @@ export async function GET() {
 		{ status: 200 }
 	);
 }
+
+
+export async function DELETE(req: NextRequest) {
+	const { id } = await req.json();
+
+	const { data, error } = await supabase
+		.from("candidates")
+		.delete()
+		.eq("id", id);
+	
+	if (error) {
+		return NextResponse.json(
+			{ message: "Error! Can't delete", success: false },
+			{ status: 500 }
+		);
+		
+	}
+	
+	return NextResponse.json(
+			{ message: "Delete successful!", success: true },
+			{ status: 200 }
+		);
+}
+

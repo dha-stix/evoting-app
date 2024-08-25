@@ -1,11 +1,11 @@
 "use client";
+import ValidateVoterForm from "@/app/components/voter/ValidateVoterForm";
+import ValidateImageForm from "@/app/components/voter/ValidateImageForm";
 import { useForm, SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { votersFormSchema } from "@/app/utils/lib";
 import { useState } from "react";
 import * as z from "zod";
-import ValidateVoterForm from "@/app/components/voter/ValidateVoterForm";
-import ValidateImageForm from "@/app/components/voter/ValidateImageForm";
 
 type FormField = z.infer<typeof votersFormSchema>;
 
@@ -18,7 +18,7 @@ export default function Login() {
 	});
 	const { errors } = formState;
 
-	const postData = async (data: FormField) => { 
+	const postData = async (data: FormField) => {
 		try {
 			const request = await fetch("/api/vote/verify", {
 				method: "POST",
@@ -28,38 +28,37 @@ export default function Login() {
 				},
 			});
 			const response = await request.json();
-			if (response.user || response.success) {
+			if (response.success) {
 				setSubmitting(false);
 				reset();
+				localStorage.setItem("_user_", JSON.stringify(response.user));
 				setConfirmImage(true);
 			} else {
 				alert(response.message);
 			}
-			
-		} catch (error) { 
+		} catch (error) {
 			console.error(error);
 		}
-	}
+	};
 
 	const onSubmit: SubmitHandler<FormField> = (data) => {
 		setSubmitting(true);
 		postData(data);
-	
 	};
-
 
 	return (
 		<main className='p-8 flex items-center justify-center min-h-screen flex-col w-full'>
 			{confirmImage ? (
 				<ValidateImageForm />
-				
-
-			): (
-					<ValidateVoterForm handleSubmit={handleSubmit} register={register} errors={errors} onSubmit={onSubmit} submitting={submitting} />
-					
+			) : (
+				<ValidateVoterForm
+					handleSubmit={handleSubmit}
+					register={register}
+					errors={errors}
+					onSubmit={onSubmit}
+					submitting={submitting}
+				/>
 			)}
-			
-
 		</main>
 	);
 }

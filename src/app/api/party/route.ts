@@ -36,10 +36,15 @@ export async function POST(req: NextRequest) {
 
 export async function GET() { 
     try {
-        const { data, error } = await supabase.from("parties").select("*").order("name", { ascending: true })
+        const { data, error, count } = await supabase.from("parties").select("*", {count: "exact"}).order("name", { ascending: true })
+
         if (error) throw error
 
-        return NextResponse.json(data, { status: 200 })
+        return NextResponse.json({
+            message: "Parties fetched successfully",
+            parties: data,
+            count
+        }, { status: 200 })
 
     } catch (error) {
         return NextResponse.json(
@@ -47,31 +52,4 @@ export async function GET() {
             { status: 500 }
         )
     }
-}
-
-export async function DELETE(req: NextRequest) { 
-    const partyAcronym = req.nextUrl.searchParams.get("acronym");
-    
-    try {
-        const { error } = await supabase.from("parties").delete().eq("acronym", partyAcronym)
-        if (error) throw error
-
-
-        //👇🏻 BUG IMAGE NOT DELETING
-        const { error: storageError } = await supabase.storage.from("party").remove([`${partyAcronym}/logo`])
-        if (storageError) throw storageError
-
-        return NextResponse.json(
-            { message: "Party Deleted Successfully!", success: true },
-            { status: 200 }
-        )
-
-    } catch (error) {
-        return NextResponse.json(
-            { message: "An error occured, please try again", success: false, error },
-            { status: 500 }
-        )
-    }
-
-
 }

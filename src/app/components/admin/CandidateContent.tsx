@@ -1,19 +1,21 @@
 "use client";
 import { ondoSenatorialDistricts } from "@/app/utils/lib";
 import { MdDelete } from "react-icons/md";
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 interface Props {
     parties: Party[],
     senators: Candidate[],
-    governors: Candidate[]
+	governors: Candidate[],
+	setGovernors: Dispatch<SetStateAction<Candidate[]>>;
+	setSenators: Dispatch<SetStateAction<Candidate[]>>;
 }
 
 const changeToTitleCase = (str: string): string => {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
-export default function CandidateContent({ parties, senators, governors }: Props) {
+export default function CandidateContent({ parties, senators, governors, setGovernors, setSenators }: Props) {
     const [candidateName, setCandidateName] = useState<string>("");
     const [adding, setAdding] = useState<boolean>(false);
 	const [electionType, setElectionType] = useState<string>("");
@@ -40,16 +42,48 @@ export default function CandidateContent({ parties, senators, governors }: Props
             });
             const data = await response.json();
             alert(data.message);
-            setAdding(false);
+			setAdding(false);
+			setCandidateName("")
+			setParty("")
+			setDistrict("")
+			setElectionType("")
         } catch (error) {
             console.error(error);
             setAdding(false);
         }
-    }
+	}
+	
+	const deleteCandidate = async (id: number) => { 
+        try {
+            const response = await fetch("/api/candidates", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+				body: JSON.stringify({ id }),
+            });
+			const data = await response.json();
+			return data.success
+        } catch (error) {
+            console.error(error);
+			setAdding(false);
+        }
+	}
 
-    const handleDeleteCandidate = async (id: number) => { 
-        alert(id)
-    }
+    const handleDeleteCandidate = async (id: number, candidates: Candidate[], type: string) => { 
+		const status = await deleteCandidate(id)
+		if (!status) return;
+	
+			if (type === "sen") {
+			const data = candidates.filter(candidate => candidate.id !== id);
+			setSenators(data)
+			
+		} else {
+			const data = candidates.filter(candidate => candidate.id !== id);
+			setGovernors(data)
+		}	
+		
+	}
 
 	return (
 		<div>
@@ -157,7 +191,7 @@ export default function CandidateContent({ parties, senators, governors }: Props
                                 <td className='md:text-sm text-xs'>{senator.name}</td>
                                 <td className='md:text-sm text-xs'>{senator.party}</td>
                                 <td className='md:text-sm text-xs'>Ondo {changeToTitleCase(senator.sen_type!)}</td>
-                                <td><MdDelete className="text-red-500 text-lg cursor-pointer" onClick={() => handleDeleteCandidate(senator.id)}/></td>
+                                <td><MdDelete className="text-red-500 text-lg cursor-pointer" onClick={() => handleDeleteCandidate(senator.id, senators, "sen")}/></td>
                             </tr>
                         ))}
 						
@@ -184,7 +218,7 @@ export default function CandidateContent({ parties, senators, governors }: Props
                             <tr key={governor.id}>
                                 <td className='md:text-sm text-xs'>{governor.name}</td>
                                 <td className='md:text-sm text-xs'>{governor.party}</td>
-                                <td><MdDelete className="text-red-500 text-lg cursor-pointer" onClick={() => handleDeleteCandidate(governor.id)}/></td>
+                                <td><MdDelete className="text-red-500 text-lg cursor-pointer" onClick={() => handleDeleteCandidate(governor.id, governors, "gov")}/></td>
                             </tr>
                             
                         ))}

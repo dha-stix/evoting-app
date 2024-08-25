@@ -1,10 +1,11 @@
 "use client"
 import { useRef, useState, useEffect } from "react";
-
+import { useRouter } from "next/navigation";
 export default function ValidateImageForm() {
 	const [imageData, setImageData] = useState<string>("");
 	const videoRef = useRef<HTMLVideoElement | any>();
 	const photoRef = useRef<HTMLCanvasElement | any>();
+	const router = useRouter();
 
 	const getUserCamera = () => {
 		navigator.mediaDevices
@@ -56,7 +57,8 @@ export default function ValidateImageForm() {
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         console.log("Image submitted");
-        console.log({imageData})
+		console.log({ imageData })
+		router.push("/vote/ballot");
      }
     
     return (

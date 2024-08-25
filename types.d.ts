@@ -18,8 +18,8 @@ interface VoterSchema {
 interface LGA { 
     id: string;
     name: string;
+    location?: string
 }
-
 interface CardDetails {
     image: string,
     first_name: string;
@@ -36,6 +36,7 @@ interface Party {
     name: string;
     acronym: string;
     logo: string;
+    count?: number;
 }
 interface District {
     id: string;
@@ -53,5 +54,41 @@ interface Voter {
     last_name: string;
     other_name: string;
     _vin: string;
+    count?: number;
     gender: string;
+}
+interface Election {
+    id: number;
+    name: string;
+    type: "sen" | "gov";
+    status: "Not Started" | "In Progress" | "Ended";
+    description?: string;
+    candidates?: FormCandidates[];
+    active: boolean;
+    count?: number;
+    start_date?: string;
+    end_date?: string;
+    created_at?: string;
+    results?: string | Result[];
+    voters?: number [] | null
+}
+interface Result {
+    name: string;
+    party: string;
+    vote_count: number;
+    voters: number [];
+    sen_type: string | null;
+    active?: boolean;
+}
+interface FormCandidates {
+	id: number;
+	name: string;
+    party: string;
+    sen_type: string | null;
+}
+interface User {
+  id: number;
+  first_name: string;
+  home_lga: string;
+  email: string;
 }

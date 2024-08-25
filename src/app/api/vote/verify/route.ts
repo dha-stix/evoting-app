@@ -11,7 +11,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function POST(req: NextRequest) { 
     const { vin, nin, email, date_of_birth } = await req.json();
 
-    const { data, error } = await supabase.from("voters").select("id, _vin").eq("_vin", vin).eq("nin", Number(nin)).eq("email", email).eq("date_of_birth", date_of_birth)
+    const { data, error } = await supabase.from("voters").select("id, email, first_name, home_lga").eq("_vin", vin).eq("nin", Number(nin)).eq("email", email).eq("date_of_birth", date_of_birth)
 
     if (data?.length === 0 || !data) {
         return NextResponse.json(

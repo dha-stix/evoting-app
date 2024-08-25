@@ -1,6 +1,6 @@
 import { MdDelete } from "react-icons/md";
-import { useState, useCallback, useEffect } from "react";
-
+import { useState } from "react";
+import Image from "next/image";
 
 export default function PartiesContent({ parties }: { parties: Party[] }) {
     const [partyName, setPartyName] = useState<string>('');
@@ -61,29 +61,6 @@ export default function PartiesContent({ parties }: { parties: Party[] }) {
             setSubmitting(false);
         }
     }
-    
-  
-
-    const handleDeleteParty = async (acronym: string) => {
-        try {
-            const request = await fetch(`/api/party?acronym=${acronym}`, {
-                method: "DELETE",
-                headers: {
-                    'Content-Type': 'application/json',
-                },   
-            })
-
-            const response = await request.json()
-            console.log(response)
-            alert(response.message)
-
-        } catch (err) {
-            console.error(err)
-        }
-
-    }
-
-
 	return (
 		<div>
 			<h2 className='font-bold text-xl text-green-600'>
@@ -149,18 +126,19 @@ export default function PartiesContent({ parties }: { parties: Party[] }) {
 					<thead>
 						<tr>
 							<th>Names</th>
-                            <th>Actions</th>
+                            <th>Logo</th>
 						</tr>
 					</thead>
                     <tbody>
                         {parties.map((party) => (
                             <tr key={party.id}>
                                 <td className='md:text-sm text-xs'>{party.name} ({party.acronym})</td>
-                                <td><MdDelete className="text-red-500 text-lg cursor-pointer" onClick={() => handleDeleteParty(party.acronym)}/></td>
+
+                                <td className='md:text-sm text-xs'>
+                                    <Image src={`${party.logo}`} alt={party.name} width={50} height={50} />
+                                </td>
                             </tr>
                         ))}
-						
-						
 					</tbody>
 				</table>
 			</div>

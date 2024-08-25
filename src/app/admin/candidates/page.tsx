@@ -4,7 +4,7 @@ import SideNav from "@/app/components/admin/SideNav";
 import TopNav from "@/app/components/admin/TopNav";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
+import { supabase } from "@/app/utils/supabase";
 
 export default function Home() {
 	const router = useRouter();
@@ -26,18 +26,15 @@ export default function Home() {
 
   const fetchAllData = useCallback (async () => {
     try {
-        const [candidates, party] = await Promise.all([
+        const [candidates, {parties}] = await Promise.all([
             fetchData<{senators: Candidate[], governors: Candidate[]}>('/api/candidates'),
-            fetchData<Party[]>('/api/party')
+            fetchData<{parties: Party[]}>('/api/party')
         ]);
       
-      const newParties: Party[] = [{ id: 500, name: "", logo: "", acronym: "" }, ...party];
+      const newParties: Party[] = [{ id: 500, name: "", logo: "", acronym: "" }, ...parties];
       setParties(newParties);
       setSenators(candidates?.senators)
       setGovernors(candidates?.governors)
-  
-        // Log or process the data as needed
-        console.log('Candidates:', candidates);
     } catch (error) {
         console.error('Error fetching data:', error);
     }
@@ -52,14 +49,32 @@ export default function Home() {
       if (!token) {
         return router.push("/admin/login");
       }
-  const data = JSON.parse(token!);
-  setEmail(data.user.email);
-  setLoading(false)
-}, [router]);
+    const data = JSON.parse(token!);
+    setEmail(data.user.email);
+    setLoading(false)
+  }, [router]);
 
 	useEffect(() => {
 		authenticateUser();
-	}, [authenticateUser]);
+  }, [authenticateUser]);
+
+  useEffect(() => {
+    const insertChannelSub = supabase
+      .channel("get-candidates")
+      .on('postgres_changes', { event: "INSERT", schema: 'public', table: 'candidates' }, (payload) => {
+        if (payload.new.election_type === "sen") {
+          setSenators(prev => [...prev, payload.new] as Candidate[]);
+        } else {
+          setGovernors(prev => [...prev, payload.new] as Candidate[]);
+        }
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(insertChannelSub);
+    };
+  }, []);
+
 
 	return (
 		<main className='flex min-h-screen flex-col w-full'>
@@ -71,7 +86,7 @@ export default function Home() {
 					{loading ? (
 						<p>Authenticating, please wait....</p>
 					) : (
-              <CandidateContent parties={parties} governors={governors} senators={senators} />
+              <CandidateContent parties={parties} governors={governors} senators={senators} setGovernors={setGovernors} setSenators={setSenators} />
 					)}
 				</div>
 			</div>
