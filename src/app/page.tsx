@@ -6,7 +6,7 @@ export default function Home() {
 	return (
 		<main className='flex min-h-screen flex-col w-full'>
 			<nav className=' px-4 py-2 h-[10vh] border-b-[1px] flex items-center justify-between'>
-				<h2 className='font-extrabold text-xl'>E-voting</h2>
+				<h2 className='font-extrabold text-xl'>AuthVote</h2>
 				<Link
 					href='/admin/login'
 					className='px-4 rounded  py-2 font-lg bg-green-500 text-[#FBF6EE]'
