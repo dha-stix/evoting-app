@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
     try {
         const imageBlob: Blob = await fetch(image_url).then((res) => res.blob());
-		const embeddings = await generateOpenAIEmbeddings({ ...profile, _vin, imageBlob });
+		const embeddings = await generateOpenAIEmbeddings({ imageBlob });
 
         const { error } = await supabase
 			.from("voters")

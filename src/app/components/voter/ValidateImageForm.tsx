@@ -49,16 +49,27 @@ export default function ValidateImageForm() {
 				ctx.drawImage(video, 0, 0, photo.width, photo.height);
 				const imageDataURL = photo.toDataURL("image/jpeg");
 				setImageData(imageDataURL);
-				console.log({ image_url: imageDataURL});
 			}
 		}
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        console.log("Image submitted");
-		console.log({ imageData })
-		router.push("/vote/ballot");
+
+		const request = await fetch("/api/vote/img-validate", {
+			method: "POST",
+			body: JSON.stringify({ imageData }),
+			headers: {
+				"Content-Type": "application/json",
+			},
+		});
+		const response = await request.json();
+		if (response.success) {
+			alert(response.message);
+			router.push("/vote/ballot");
+		} else { 
+			alert(response.message);
+		}
      }
     
     return (
