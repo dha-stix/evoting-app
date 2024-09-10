@@ -54,7 +54,9 @@ export default function ValidateImageForm() {
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
+		e.preventDefault();
+		const userLocalData = localStorage.getItem("_user_");
+		const userData = userLocalData ? JSON.parse(userLocalData) : null;
 
 		const request = await fetch("/api/vote/img-validate", {
 			method: "POST",
@@ -64,8 +66,8 @@ export default function ValidateImageForm() {
 			},
 		});
 		const response = await request.json();
-		if (response.success) {
-			alert(response.message);
+		if (response.success && userData.id === response.data.id && userData.email === response.data.email && userData.first_name === response.data.first_name) { 
+		
 			router.push("/vote/ballot");
 		} else { 
 			alert(response.message);

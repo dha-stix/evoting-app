@@ -1,3 +1,4 @@
+import Link from "next/link";
 interface Props {
 	onSubmit: (data: any) => void;
 	submitting: boolean;
@@ -72,6 +73,12 @@ export default function ValidateVoterForm({
 			>
 				{submitting ? "Validating..." : "Proceeed"}
 			</button>
+			<Link
+					href='/'
+					className='mt-[5px] text-center block text-sm hover:underline '
+				>
+					Go Back
+				</Link>
 		</form>
 	);
 }

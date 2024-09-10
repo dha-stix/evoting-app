@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useState, useEffect } from "react";
 
 interface CountdownProps {
@@ -121,9 +122,9 @@ export default function RecentElections({
 						<p className='text-sm opacity-65'>
 							Started at {formatTime12Hour(election.start_date!)}
 						</p>
-          </div>
+					</div>
 
-          <button className='bg-blue-500 text-sm text-white p-2 rounded-md'>View Election Results</button>
+          <Link href="/vote/count" className='bg-blue-500 text-sm text-white p-2 rounded-md'>View Election Results</Link>
           
 					<button
 						className='bg-red-500 text-sm text-white px-2 py-1 rounded-md'

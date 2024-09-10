@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import * as z from "zod";
 
 type FormField = z.infer<typeof adminFormSchema>;
@@ -81,6 +82,12 @@ export default function Login() {
 					disabled={buttonClicked}>
 					{buttonClicked ? "Signing in..." : "Sign in"}
 				</button>
+				<Link
+					href='/'
+					className='mt-[5px] text-center block text-sm hover:underline '
+				>
+					Go Back
+				</Link>
 			</form>
 		</main>
 	);
