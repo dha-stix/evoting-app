@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+	html {
+		-webkit-tap-highlight-color: transparent;
+	}
+	body {
+		@apply bg-ground font-sans text-ink antialiased;
+	}
+	:focus-visible {
+		@apply outline outline-[3px] outline-offset-2 outline-brand-500;
+	}
+	::selection {
+		@apply bg-brand-100 text-forest;
+	}
+}
+
+@layer components {
+	.container-page {
+		@apply mx-auto w-full max-w-[1200px] px-4 sm:px-6;
+	}
+	.eyebrow {
+		@apply text-sm font-bold uppercase tracking-[0.08em] text-brand;
+	}
+	.h-display {
+		@apply font-display font-bold tracking-[-0.03em];
+	}
+	.card {
+		@apply rounded-3xl border border-line bg-white;
+	}
+	.field {
+		@apply h-[50px] w-full rounded-xl border border-[#D5DDD4] bg-white px-3.5 text-base text-ink transition-[border-color,box-shadow] placeholder:text-subtle/70 focus:border-brand focus:outline-none focus:ring-4 focus:ring-brand/10 disabled:bg-ground aria-[invalid=true]:border-danger aria-[invalid=true]:ring-danger/10;
+	}
+	.lift {
+		@apply transition-[transform,box-shadow] duration-200 hover:-translate-y-0.5 hover:shadow-lift active:translate-y-0;
+	}
+	.grid-bg {
+		background-image: linear-gradient(#e3e9e2 1px, transparent 1px), linear-gradient(90deg, #e3e9e2 1px, transparent 1px);
+		background-size: 44px 44px;
+	}
+	.guilloche {
+		background-image: repeating-radial-gradient(circle at 115% -20%, rgba(255, 255, 255, 0.07) 0 2px, transparent 2px 16px),
+			repeating-radial-gradient(circle at -20% 120%, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 12px);
+	}
+	/* Strokes draw themselves in: put .draw-in on an <svg>. */
+	.draw-in path,
+	.draw-in rect,
+	.draw-in circle,
+	.draw-in polyline {
+		stroke-dasharray: 90;
+		stroke-dashoffset: 90;
+		@apply animate-draw;
+	}
+	.tick path {
+		stroke-dasharray: 26;
+		stroke-dashoffset: 26;
+		animation: draw 0.55s ease forwards 0.35s;
+	}
+}
+
+/* Keyframes used from inline styles and arbitrary values, so Tailwind cannot emit them itself. */
+@keyframes draw {
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+@keyframes shine {
+	0% {
+		background-position: 130% 0;
+	}
+	60%,
+	100% {
+		background-position: -30% 0;
+	}
+}
+@keyframes flap {
+	0%,
+	100% {
+		transform: scaleY(1);
+	}
+	50% {
+		transform: scaleY(-0.6);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+	.draw-in path,
+	.draw-in rect,
+	.draw-in circle,
+	.draw-in polyline,
+	.tick path {
+		stroke-dashoffset: 0;
+	}
+}
+
+@media print {
+	.no-print {
+		display: none !important;
+	}
+}
