@@ -20,7 +20,8 @@ drop table if exists
 	public.voters,
 	public.candidates,
 	public.parties,
-	public.admins
+	public.admins,
+	public.lgas
 cascade;
 
 do $$
@@ -33,7 +34,7 @@ begin
 		where n.nspname = 'public' and p.proname in (
 			'office_key', 'is_admin', 'can_manage', 'is_super_admin', 'guard_election_candidates',
 			'register_voter', 'match_face', 'face_similarity', 'cast_vote', 'election_turnout',
-			'check_receipt', 'admin_overview', 'voter_participation'
+			'check_receipt', 'admin_overview', 'voter_participation', 'voter_district_from_lga', 'guard_election_times'
 		)
 	loop
 		execute format('drop function if exists %s cascade', f.sig);

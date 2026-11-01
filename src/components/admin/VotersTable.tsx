@@ -9,7 +9,8 @@ import { Silhouette } from "@/components/ui/Brand";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Field";
 import { Drawer } from "@/components/ui/Overlay";
-import { DISTRICTS, ELECTION_STATE, STATES_LGAS } from "@/lib/constants";
+import { DISTRICTS } from "@/lib/constants";
+import { LgaOptions } from "@/components/ui/LgaOptions";
 import { getVoterDetail, resendVin, setVoterStatus } from "@/lib/supabase-actions";
 import { formatDate, formatNumber, fullName, initials } from "@/lib/utils";
 import type { VoterRow } from "@/types";
@@ -56,7 +57,7 @@ export function VotersTable({ voters, total, page, pageSize, filters, canManage 
 				</label>
 				<Select name="lga" defaultValue={filters.lga ?? ""} aria-label="LGA" className="h-11 w-auto min-w-[170px]">
 					<option value="">All LGAs</option>
-					{(STATES_LGAS[ELECTION_STATE] ?? []).map((l) => <option key={l}>{l}</option>)}
+					<LgaOptions />
 				</Select>
 				<Select name="status" defaultValue={filters.status ?? ""} aria-label="Status" className="h-11 w-auto min-w-[150px]">
 					<option value="">Any status</option>

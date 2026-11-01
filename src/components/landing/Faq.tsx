@@ -5,7 +5,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils";
 
 const FAQS: [LucideIcon, string, string][] = [
-	[UserCheck, "Who can register?", "Any Nigerian citizen aged 18 or over with a valid 11-digit NIN, an email address and a home address in Ondo State. You only register once."],
+	[UserCheck, "Who can register?", "Any Nigerian citizen aged 18 or over with a valid 11-digit NIN, an email address and a home in one of Ondo State's 18 LGAs. You vote for governor, and for the senator of the district your LGA belongs to: Ondo North, Central or South. You only register once."],
 	[ScanFace, "What happens to my face scan?", "We store one photo in private storage and a face template (a list of numbers, not a picture). They are used only to confirm it is you when you sign in to vote, and only election officers can view the photo."],
 	[EyeOff, "Can anyone see who I voted for?", "No. Your ballot is stored without your identity. We only record that you have voted, so nobody can vote twice in your name."],
 	[AlertTriangle, "The face check failed. What now?", "Move to even lighting, remove glasses or a face covering, and try again. After three failed attempts sign-in pauses for 30 minutes and an election officer can help."],

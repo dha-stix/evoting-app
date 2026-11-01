@@ -45,6 +45,7 @@ export interface Turnout {
 	voted: number;
 	eligible: number;
 	by_district: { district: District; voted: number; eligible: number }[];
+	by_lga?: { lga: string; district: District; voted: number; eligible: number }[];
 }
 
 export interface VoterRow {

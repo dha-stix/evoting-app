@@ -6,10 +6,11 @@ import { redirect } from "next/navigation";
 import type { ActionResult, AdminRole, FaceFrame, VoterCard } from "@/types";
 import { LGA_DISTRICT, LIMITS, STORAGE } from "./constants";
 import { generateOtp, generateVin, hashNin, hashOtp, safeEqual } from "./crypto";
-import { sendOtpEmail, sendVinEmail } from "./email";
+import { sendAdminLinkEmail, sendOtpEmail, sendVinEmail } from "./email";
 import { FACE, checkLiveness, faceMockEnabled, toPgVector } from "./face";
 import { clearVoterSession, readVoterSession, setVoterSession, signCardToken } from "./session";
 import { createServiceClient, createSessionClient, getCurrentAdmin } from "./supabase";
+import { fromWatInput, startOfWatDay } from "./time";
 import { maskEmail } from "./utils";
 import {
 	candidateSchema,
@@ -228,7 +229,12 @@ export async function registerVoter(
 // Voter sign-in
 // ---------------------------------------------------------------------------
 
-async function issueOtp(voterId: string, email: string): Promise<ActionResult> {
+/** Development only: show the sign-in code on screen when the email could not be delivered. */
+const showDevCodes = () => process.env.NODE_ENV !== "production" && process.env.DEV_SHOW_EMAIL_CODES === "true";
+
+type OtpSent = { notice?: string; devCode?: string };
+
+async function issueOtp(voterId: string, email: string): Promise<ActionResult<OtpSent>> {
 	const db = createServiceClient();
 	const { count } = await db
 		.from("otp_codes")
@@ -242,16 +248,18 @@ async function issueOtp(voterId: string, email: string): Promise<ActionResult> {
 		.from("otp_codes")
 		.insert({ voter_id: voterId, code_hash: hashOtp(voterId, code), expires_at: minutesFromNow(LIMITS.otpTtlMinutes) });
 	if (error) return err(GENERIC);
+	let sent;
 	try {
-		await sendOtpEmail(email, code);
+		sent = await sendOtpEmail(email, code);
 	} catch (e) {
 		console.error("[otp] email", e);
 		return err("We could not send the email. Please try again.");
 	}
-	return { ok: true };
+	if (!sent.delivered) return { ok: true, data: { notice: sent.reason, devCode: showDevCodes() ? code : undefined } };
+	return { ok: true, data: {} };
 }
 
-export async function beginVoterSignIn(input: { vin: string; nin: string; date_of_birth: string }): Promise<ActionResult<{ email: string }>> {
+export async function beginVoterSignIn(input: { vin: string; nin: string; date_of_birth: string }): Promise<ActionResult<{ email: string } & OtpSent>> {
 	const parsed = voterLookupSchema.safeParse(input);
 	if (!parsed.success) return firstIssue(parsed.error);
 	const { vin, nin, date_of_birth } = parsed.data;
@@ -274,10 +282,10 @@ export async function beginVoterSignIn(input: { vin: string; nin: string; date_o
 	const sent = await issueOtp(voter.id, voter.email);
 	if (!sent.ok) return sent;
 	await setVoterSession({ voterId: voter.id, stage: "pending" });
-	return { ok: true, data: { email: maskEmail(voter.email) } };
+	return { ok: true, data: { email: maskEmail(voter.email), ...sent.data } };
 }
 
-export async function resendVoterOtp(): Promise<ActionResult> {
+export async function resendVoterOtp(): Promise<ActionResult<OtpSent>> {
 	const session = await readVoterSession();
 	if (!session || session.stage !== "pending") return err("Your session has expired. Please start again.");
 	const db = createServiceClient();
@@ -406,8 +414,7 @@ export async function lookupVoterCard(input: { vin: string; date_of_birth: strin
 	if (!data) return err("We could not find a card with those details.");
 	const [{ data: signed }, token] = await Promise.all([db.storage.from(STORAGE.voterPhotos).createSignedUrl(data.photo_path, 600), signCardToken(data.vin)]);
 	const { photo_path: _photo, ...card } = data;
-	const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-	return { ok: true, data: { ...card, photo_url: signed?.signedUrl ?? null, verify_url: `${site}/verify/${token}` } as VoterCard };
+	return { ok: true, data: { ...card, photo_url: signed?.signedUrl ?? null, verify_url: `${siteUrl()}/verify/${token}` } as VoterCard };
 }
 
 export async function checkReceipt(code: string): Promise<ActionResult<{ election: string }>> {
@@ -541,8 +548,16 @@ export async function createElection(input: ElectionInput): Promise<ActionResult
 	return guarded("manage", async ({ admin, db }) => {
 		const parsed = electionSchema.safeParse(input);
 		if (!parsed.success) return firstIssue(parsed.error);
-		const { candidate_ids, ...e } = parsed.data;
-		if (!e.is_draft && new Date(e.ends_at) <= new Date()) return err("Closing time must be in the future.", "ends_at");
+		const { candidate_ids, start_now, starts_at, ends_at, ...e } = parsed.data;
+
+		// The server clock decides, never the admin's device.
+		const now = Date.now();
+		const start = start_now ? new Date(now) : fromWatInput(starts_at!);
+		const end = fromWatInput(ends_at);
+		if (!start_now && start.getTime() < startOfWatDay(now).getTime()) return err("Pick today or a later date.", "starts_at");
+		if (!start_now && start.getTime() < now - 60_000) return err("That time has already passed. Pick a later time, or open voting now.", "starts_at");
+		if (end.getTime() <= start.getTime()) return err("Closing time must be after opening time.", "ends_at");
+		if (end.getTime() - start.getTime() < 60 * 60_000) return err("Voting must stay open for at least an hour.", "ends_at");
 
 		const { data: picked } = await db.from("candidates").select("id, type, district").in("id", candidate_ids);
 		if (!picked || picked.length !== candidate_ids.length || picked.some((c) => c.type !== e.type || c.district !== e.district)) {
@@ -551,7 +566,7 @@ export async function createElection(input: ElectionInput): Promise<ActionResult
 
 		const { data, error } = await db
 			.from("elections")
-			.insert({ ...e, description: e.description || null, starts_at: new Date(e.starts_at).toISOString(), ends_at: new Date(e.ends_at).toISOString(), created_by: admin.id })
+			.insert({ ...e, description: e.description || null, starts_at: start.toISOString(), ends_at: end.toISOString(), created_by: admin.id })
 			.select("id")
 			.single();
 		if (error) {
@@ -572,6 +587,9 @@ export async function createElection(input: ElectionInput): Promise<ActionResult
 
 export async function publishElection(id: number): Promise<ActionResult> {
 	return guarded("manage", async ({ admin, db }) => {
+		const { data: draft } = await db.from("elections").select("starts_at").eq("id", id).eq("is_draft", true).maybeSingle();
+		if (!draft) return err("This draft no longer exists.");
+		if (new Date(draft.starts_at).getTime() < Date.now() - 60_000) return err("This draft's opening time has passed. Delete it and schedule the election again.");
 		const { error } = await db.from("elections").update({ is_draft: false }).eq("id", id).eq("is_draft", true);
 		if (error) return err(error.code === "23P01" ? "Another election for this office overlaps these dates." : GENERIC);
 		await audit(admin, "election.published", "election", id);
@@ -647,20 +665,42 @@ export async function resendVin(id: string): Promise<ActionResult> {
 
 // Team -------------------------------------------------------------------
 
+const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
+/** One-time link to the set-password page, built from a Supabase hashed token. */
+async function adminLink(type: "invite" | "recovery", email: string) {
+	const { data, error } = await createServiceClient().auth.admin.generateLink({ type, email });
+	if (error || !data.properties?.hashed_token) return { error: error?.message ?? "no token" };
+	const url = `${siteUrl()}/admin/set-password?token_hash=${encodeURIComponent(data.properties.hashed_token)}&type=${type}`;
+	return { url, userId: data.user?.id };
+}
+
 export async function inviteAdmin(input: { full_name: string; email: string; role: AdminRole }): Promise<ActionResult> {
 	return guarded("super", async ({ admin }) => {
 		const parsed = inviteSchema.safeParse(input);
 		if (!parsed.success) return firstIssue(parsed.error);
 		const service = createServiceClient();
-		const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-		const { data, error } = await service.auth.admin.inviteUserByEmail(parsed.data.email, { redirectTo: `${site}/admin/login` });
-		if (error || !data.user) return err(error?.message.includes("already") ? "That email already has an account." : GENERIC);
-		const { error: insertError } = await service.from("admins").insert({ id: data.user.id, ...parsed.data });
+		const link = await adminLink("invite", parsed.data.email);
+		if ("error" in link || !link.userId) return err(link.error?.includes("already") ? "That email already has an account." : GENERIC);
+		const { error: insertError } = await service.from("admins").insert({ id: link.userId, ...parsed.data });
 		if (insertError) return err(uniqueMessage(insertError.code, "That person is already on the team."));
-		await audit(admin, "admin.invited", "admin", data.user.id, { email: parsed.data.email, role: parsed.data.role });
+		await sendAdminLinkEmail(parsed.data.email, "invite", link.url!);
+		await audit(admin, "admin.invited", "admin", link.userId, { email: parsed.data.email, role: parsed.data.role });
 		revalidatePath("/admin/team");
 		return { ok: true };
 	});
+}
+
+/** Always answers the same way, so it cannot be used to find out who is an admin. */
+export async function requestAdminPasswordReset(email: string): Promise<ActionResult> {
+	const clean = email.trim().toLowerCase();
+	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean)) return err("Enter a valid email", "email");
+	const { data: admin } = await createServiceClient().from("admins").select("id").eq("email", clean).maybeSingle();
+	if (admin) {
+		const link = await adminLink("recovery", clean);
+		if ("url" in link && link.url) await sendAdminLinkEmail(clean, "reset", link.url).catch((e) => console.error("[reset] email", e));
+	}
+	return { ok: true };
 }
 
 export async function updateAdminRole(id: string, role: AdminRole): Promise<ActionResult> {

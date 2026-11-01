@@ -102,8 +102,10 @@ export const electionSchema = z
 		type: z.enum(["governorship", "senatorial"]),
 		district: z.enum(["north", "central", "south"]).nullable(),
 		description: z.string().trim().max(500).optional().or(z.literal("")),
-		starts_at: z.string().min(1, "Choose when voting opens"),
-		ends_at: z.string().min(1, "Choose when voting closes"),
+		// Times are "YYYY-MM-DDTHH:mm" in Nigerian time (WAT); the server converts and checks them.
+		start_now: z.boolean(),
+		starts_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Choose when voting opens").optional(),
+		ends_at: z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, "Choose when voting closes"),
 		candidate_ids: z.array(z.number().int()).min(2, "Pick at least two candidates"),
 		is_draft: z.boolean(),
 	})
@@ -111,10 +113,7 @@ export const electionSchema = z
 		message: "Senatorial elections need a district",
 		path: ["district"],
 	})
-	.refine((v) => new Date(v.ends_at) > new Date(v.starts_at), {
-		message: "Closing time must be after opening time",
-		path: ["ends_at"],
-	});
+	.refine((v) => v.start_now || Boolean(v.starts_at), { message: "Choose when voting opens", path: ["starts_at"] });
 
 export const inviteSchema = z.object({
 	full_name: z.string().trim().min(3, "Enter their name").max(80),

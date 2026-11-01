@@ -1,4 +1,5 @@
 import type { District } from "@/types";
+import { LGAS_BY_DISTRICT, ONDO_LGAS } from "./data/ondo";
 import statesLgas from "./data/states-lgas.json";
 
 export const SITE_NAME = "AuthVote";
@@ -16,27 +17,11 @@ export const DISTRICTS: Record<District, string> = {
 	south: "Ondo South",
 };
 
-/** Ondo LGAs grouped into the three senatorial districts. */
-export const LGA_DISTRICT: Record<string, District> = {
-	"Akoko North-East": "north",
-	"Akoko North-West": "north",
-	"Akoko South-East": "north",
-	"Akoko South-West": "north",
-	Ose: "north",
-	Owo: "north",
-	"Akure North": "central",
-	"Akure South": "central",
-	Idanre: "central",
-	Ifedore: "central",
-	"Ile Oluji/Okeigbo": "central",
-	"Ondo East": "central",
-	"Ondo West": "central",
-	"Ese Odo": "south",
-	Ilaje: "south",
-	Irele: "south",
-	Odigbo: "south",
-	Okitipupa: "south",
-};
+/** LGA of residence → senatorial district. */
+export const LGA_DISTRICT: Record<string, District> = Object.fromEntries(ONDO_LGAS.map((l) => [l.name, l.district]));
+
+/** "Akure North, Akure South, …" for a district. */
+export const districtLgaList = (d: District) => LGAS_BY_DISTRICT[d].map((l) => l.name).join(", ");
 
 export const ELECTION_TYPE_LABEL = { governorship: "Governorship", senatorial: "Senatorial" } as const;
 

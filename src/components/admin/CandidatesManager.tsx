@@ -8,8 +8,8 @@ import { Segmented } from "@/components/ui/Bits";
 import { PartyBadge, Silhouette } from "@/components/ui/Brand";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
-import { Drawer } from "@/components/ui/Overlay";
-import { DISTRICTS, STORAGE } from "@/lib/constants";
+import { Drawer, DrawerFooter } from "@/components/ui/Overlay";
+import { DISTRICTS, STORAGE, districtLgaList } from "@/lib/constants";
 import { deleteCandidate, saveCandidate } from "@/lib/supabase-actions";
 import { publicStorageUrl } from "@/lib/utils";
 import type { Candidate, ElectionType, Party } from "@/types";
@@ -161,7 +161,7 @@ function CandidateDrawer({ candidate, parties, defaultType, onClose, onSaved }: 
 					<Field label="District" error={errFor("district")}>
 						{(p) => (
 							<Select {...p} name="district" defaultValue={existing?.district ?? "central"}>
-								{Object.entries(DISTRICTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+								{Object.entries(DISTRICTS).map(([k, v]) => <option key={k} value={k}>{v} ({districtLgaList(k as keyof typeof DISTRICTS)})</option>)}
 							</Select>
 						)}
 					</Field>
@@ -169,10 +169,10 @@ function CandidateDrawer({ candidate, parties, defaultType, onClose, onSaved }: 
 					<Field label="Running mate" hint="Optional">{(p) => <Input {...p} name="running_mate" defaultValue={existing?.running_mate ?? ""} />}</Field>
 				)}
 				{error && !["photo", "full_name", "party_id", "district"].includes(error.field ?? "") && <p role="alert" className="rounded-xl bg-danger-bg p-3 text-sm text-danger">{error.message}</p>}
-				<div className="mt-auto grid grid-cols-2 gap-2.5 pt-2">
+				<DrawerFooter>
 					<Button variant="secondary" size="lg" onClick={onClose}>Cancel</Button>
 					<Button type="submit" size="lg" loading={busy}>Save candidate</Button>
-				</div>
+				</DrawerFooter>
 			</form>
 		</Drawer>
 	);

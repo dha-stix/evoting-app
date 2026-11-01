@@ -8,7 +8,8 @@ import { AnimatedCheck, Pill } from "@/components/ui/Bits";
 import { BallotMark, PartyBadge, Silhouette } from "@/components/ui/Brand";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Overlay";
-import { DISTRICTS, ELECTION_TYPE_LABEL, STORAGE } from "@/lib/constants";
+import { DISTRICTS, ELECTION_TYPE_LABEL, STORAGE, districtLgaList } from "@/lib/constants";
+import { LGAS_BY_DISTRICT } from "@/lib/data/ondo";
 import { castVote, signOutVoter } from "@/lib/supabase-actions";
 import { cn, countdown, initials, publicStorageUrl } from "@/lib/utils";
 import type { Candidate, Election } from "@/types";
@@ -19,7 +20,7 @@ export interface Ballot extends Election {
 }
 
 interface Props {
-	voter: { first_name: string; last_name: string; district: keyof typeof DISTRICTS };
+	voter: { first_name: string; last_name: string; district: keyof typeof DISTRICTS; home_lga: string };
 	ballots: Ballot[];
 	expiresAt: number;
 }
@@ -74,7 +75,7 @@ export function BallotBoard({ voter, ballots, expiresAt }: Props) {
 						</span>
 						<span className="hidden h-10 items-center gap-2.5 rounded-full border border-line py-0 pl-1.5 pr-3.5 text-sm font-semibold sm:inline-flex">
 							<span className="inline-flex h-[30px] w-[30px] items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-forest">{initials(`${voter.first_name} ${voter.last_name}`)}</span>
-							{voter.first_name} {voter.last_name[0]}. · {DISTRICTS[voter.district]}
+							{voter.first_name} {voter.last_name[0]}. · {voter.home_lga}, {DISTRICTS[voter.district]}
 						</span>
 						<form action={signOutVoter}>
 							<button type="submit" aria-label="Sign out" className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-line text-muted hover:text-ink">
@@ -124,7 +125,7 @@ export function BallotBoard({ voter, ballots, expiresAt }: Props) {
 										<button key={b.id} type="button" role="tab" aria-selected={on} onClick={() => setActive(b.id)} className={cn("flex min-h-16 items-center justify-between gap-2.5 rounded-[14px] px-4 py-2.5 text-left transition-all", on ? "bg-white shadow-[0_6px_18px_-10px_rgba(0,0,0,.25)]" : "")}>
 											<span className="flex min-w-0 flex-col">
 												<b>{ELECTION_TYPE_LABEL[b.type]}</b>
-												<span className="truncate text-[13px] text-subtle">{b.district ? DISTRICTS[b.district] : "Ondo State"}</span>
+												<span className="truncate text-[13px] text-subtle">{b.district ? `${DISTRICTS[b.district]} · ${LGAS_BY_DISTRICT[b.district].length} LGAs` : "All 18 LGAs of Ondo State"}</span>
 											</span>
 											{isDone(b) ? <Pill tone="dark">Voted</Pill> : <Pill tone="amber">Open</Pill>}
 										</button>
@@ -156,7 +157,10 @@ export function BallotBoard({ voter, ballots, expiresAt }: Props) {
 							</motion.section>
 						) : ballot ? (
 							<section aria-label={title(ballot)}>
-								<h2 className="mb-4 font-semibold text-muted">{ballot.title}</h2>
+								<h2 className="font-semibold text-muted">{ballot.title}</h2>
+								<p className="mb-4 mt-1 text-sm text-subtle">
+									{ballot.district ? `You can vote here because you live in ${voter.home_lga}, part of ${DISTRICTS[ballot.district]} (${districtLgaList(ballot.district)}).` : "Open to voters in all 18 LGAs of Ondo State."}
+								</p>
 								<div role="radiogroup" aria-label={`${title(ballot)} candidates`} className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,240px),1fr))] gap-4">
 									{ballot.candidates.map((c, i) => {
 										const on = selected[ballot.id] === c.id;

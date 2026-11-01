@@ -44,11 +44,11 @@ export function Pill({ children, tone = "green" }: { children: React.ReactNode; 
 /** Two or more mutually exclusive options shown as a pill switch. */
 export function Segmented<T extends string>({ value, onChange, options, label, className }: { value: T; onChange: (v: T) => void; options: { value: T; label: React.ReactNode }[]; label: string; className?: string }) {
 	return (
-		<div role="radiogroup" aria-label={label} className={cn("inline-grid gap-1.5 rounded-[14px] bg-[#E9EEE8] p-1", className)} style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0, 1fr))` }}>
+		<div role="radiogroup" aria-label={label} className={cn("inline-grid gap-1.5 rounded-[14px] bg-[#E9EEE8] p-1", className)} style={{ gridTemplateColumns: `repeat(${options.length}, minmax(max-content, 1fr))` }}>
 			{options.map((o) => {
 				const on = o.value === value;
 				return (
-					<button key={o.value} type="button" role="radio" aria-checked={on} onClick={() => onChange(o.value)} className={cn("relative h-11 rounded-[10px] px-4 text-[15px] font-semibold transition-colors", on ? "text-ink" : "text-subtle hover:text-ink")}>
+					<button key={o.value} type="button" role="radio" aria-checked={on} onClick={() => onChange(o.value)} className={cn("relative h-11 whitespace-nowrap rounded-[10px] px-4 text-[15px] font-semibold transition-colors", on ? "text-ink" : "text-subtle hover:text-ink")}>
 						{on && <motion.span layoutId={`seg-${label}`} className="absolute inset-0 rounded-[10px] bg-white shadow-[0_4px_12px_-6px_rgba(0,0,0,.25)]" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
 						<span className="relative">{o.label}</span>
 					</button>

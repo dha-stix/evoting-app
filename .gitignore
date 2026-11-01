@@ -39,4 +39,3 @@ legacy-backup-*.tar.gz
 # face service models
 face-service/models/
 .env.local.bak-*
-.claude/

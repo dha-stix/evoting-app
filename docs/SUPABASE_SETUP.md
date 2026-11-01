@@ -9,8 +9,10 @@
 1. **SQL Editor → New query**.
 2. Paste the whole of `supabase/migrations/20261031000000_init.sql` and click **Run**. You should see "Success. No rows returned".
 3. New query: paste `supabase/migrations/20261031000100_api_grants.sql` and **Run** (lets the API roles use the tables; newer projects no longer grant this automatically).
-4. New query again: paste `supabase/seed.sql` and **Run** (adds the 21 INEC parties).
-5. Check: **Table Editor** lists `admins, audit_log, candidates, election_candidates, election_tallies, elections, face_challenges, face_templates, otp_codes, participation, parties, verification_attempts, votes, voters`, and `parties` has 21 rows.
+4. New query: paste `supabase/migrations/20261101000000_ondo_lgas.sql` and **Run** (loads Ondo's 18 LGAs grouped into the three senatorial districts, and makes each voter's district follow their LGA).
+5. New query: paste `supabase/migrations/20261101000100_election_times.sql` and **Run** (elections can only be scheduled for now or later, by the server's clock).
+6. New query again: paste `supabase/seed.sql` and **Run** (adds the 21 INEC parties).
+7. Check: **Table Editor** lists `admins, audit_log, candidates, election_candidates, election_tallies, elections, face_challenges, face_templates, otp_codes, lgas, participation, parties, verification_attempts, votes, voters`; `parties` has 21 rows and `lgas` 18.
 
 If a run fails part-way, run `supabase/reset.sql` in a new query (it removes only what the AuthVote migration creates), then run the migration again.
 
@@ -39,25 +41,17 @@ SUPABASE_SERVICE_ROLE_KEY=<service_role / secret key>
 
 Never put the service role key in client code, a commit or a chat.
 
-## 6. Create the demo accounts
+## 6. Make yourself the super admin
 ```bash
-npm run seed:demo
+npm run create-admin -- you@example.com "Your Name"
 ```
-It creates a demo super admin, a demo voter and three demo elections, and prints where to use them. Details are at the top of `scripts/seed-demo.mjs`.
+Then open `/admin/login`, click **Forgot password?**, and follow the emailed link to choose your password. No password is ever set or seen by the script.
 
-## 7. Make yourself a real super admin (optional)
-1. **Authentication → Users → Add user → Create new user**: your email and a password, tick "Auto confirm".
-2. SQL Editor:
-   ```sql
-   insert into public.admins (id, full_name, email, role)
-   select id, 'Your Name', email, 'super_admin' from auth.users where email = 'you@example.com';
-   ```
-
-## 8. Run and check
+## 7. Run and check
 ```bash
 npm run dev
 ```
-- `/admin/login`: sign in as the demo admin; Overview, Elections, Candidates, Parties, Voters and Admins should all load.
-- `/vote`: sign in as the demo voter; the 6-digit code appears in the `npm run dev` terminal; the face check passes while `FACE_SERVICE_MOCK=true`.
+- `/admin/login`: sign in; Overview, Elections, Candidates, Parties, Voters and Admins should all load.
+- `/register` then `/vote`: register yourself, then sign in; the face check passes while `FACE_SERVICE_MOCK=true` (development only).
 - `/results`: votes appear live.
 - **Advisors → Security Advisor**: should show no errors.

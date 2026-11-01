@@ -31,6 +31,8 @@ export function SignInFlow({ initialStep = 0 }: { initialStep?: Step }) {
 	const [resetKey, setResetKey] = useState(0);
 	const [faceError, setFaceError] = useState<string | null>(null);
 	const [firstName, setFirstName] = useState("");
+	// Set when the code could not be emailed (development only).
+	const [delivery, setDelivery] = useState<{ notice?: string; devCode?: string }>({});
 
 	const form = useForm<z.input<typeof voterLookupSchema>>({ resolver: zodResolver(voterLookupSchema), mode: "onTouched" });
 	const { register, handleSubmit, formState } = form;
@@ -59,6 +61,7 @@ export function SignInFlow({ initialStep = 0 }: { initialStep?: Step }) {
 		setBusy(false);
 		if (!res.ok) return toast.error(res.error);
 		setEmail(res.data.email);
+		setDelivery({ notice: res.data.notice, devCode: res.data.devCode });
 		setCooldown(45);
 		setStep(1);
 	});
@@ -79,8 +82,9 @@ export function SignInFlow({ initialStep = 0 }: { initialStep?: Step }) {
 	const resend = async () => {
 		const res = await resendVoterOtp();
 		if (!res.ok) return toast.error(res.error);
+		setDelivery({ notice: res.data.notice, devCode: res.data.devCode });
 		setCooldown(45);
-		toast.success("A new code is on its way.");
+		if (!res.data.notice) toast.success("A new code is on its way.");
 	};
 
 	const onFrames = async (frames: FaceFrame[]) => {
@@ -160,11 +164,35 @@ export function SignInFlow({ initialStep = 0 }: { initialStep?: Step }) {
 								</svg>
 							</span>
 							<header>
-								<h2 className="h-display text-[28px]">Check your email</h2>
+								<h2 className="h-display text-[28px]">{delivery.notice ? "Enter your code" : "Check your email"}</h2>
 								<p className="mt-1.5 text-muted">
-									We sent a 6-digit code to <b>{email}</b>. It expires in 10 minutes.
+									{delivery.notice ? (
+										<>
+											We could not email the code to <b>{email}</b>. It expires in 10 minutes.
+										</>
+									) : (
+										<>
+											We sent a 6-digit code to <b>{email}</b>. It expires in 10 minutes.
+										</>
+									)}
 								</p>
 							</header>
+							{delivery.notice && (
+								<div role="status" className="flex gap-3 rounded-xl border border-[#F5D9A8] bg-warn-bg p-4 text-sm leading-relaxed text-warn">
+									<AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" aria-hidden />
+									<div className="flex flex-col gap-1.5">
+										<b>The email was not delivered (development).</b>
+										<span>{delivery.notice}</span>
+										{delivery.devCode ? (
+											<span>
+												Your code is <b className="font-mono text-base tracking-[0.2em] text-ink">{delivery.devCode}</b>
+											</span>
+										) : (
+											<span>The code is printed in the terminal running <code className="font-mono">npm run dev</code>. Set DEV_SHOW_EMAIL_CODES=true to show it here.</span>
+										)}
+									</div>
+								</div>
+							)}
 							<OtpInput value={code} onChange={(v) => (setCode(v), setCodeError(null))} invalid={Boolean(codeError)} disabled={busy} />
 							{codeError && <p role="alert" className="text-sm font-medium text-danger">{codeError}</p>}
 							<Button type="submit" size="lg" loading={busy} disabled={code.length !== 6} lift>

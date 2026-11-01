@@ -16,18 +16,44 @@ function layout(title: string, body: string) {
 </td></tr></table></body></html>`;
 }
 
-/** Reserved domain for the demo accounts created by scripts/seed-demo.mjs. */
-const DEMO_DOMAIN = "@demo.authvote.local";
+/** Whether the email actually left, and if not (development only) why. */
+export type SendResult = { delivered: true } | { delivered: false; reason: string };
 
-async function send(to: string, subject: string, html: string) {
-	if (!resend || to.endsWith(DEMO_DOMAIN)) {
-		// Local development without Resend: print instead of failing.
-		console.info(`[email] to=${to} subject="${subject}"\n${html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ")}`);
-		return;
+const plain = (html: string) => html.replace(/<a [^>]*href="([^"]+)"[^>]*>/g, " $1 ").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
+
+function explain(message: string) {
+	if (/own email address|testing emails|verify a domain/i.test(message)) {
+		return "Resend is in test mode, so it only delivers to the email address of the Resend account. Verify a domain in Resend to email any voter.";
+	}
+	return `Resend refused the email: ${message}`;
+}
+
+async function send(to: string, subject: string, html: string): Promise<SendResult> {
+	if (!resend) {
+		if (process.env.NODE_ENV === "production") throw new Error("RESEND_API_KEY is not set");
+		console.info(`[email] to=${to} subject="${subject}"\n${plain(html)}`);
+		return { delivered: false, reason: "No email service is set up (RESEND_API_KEY is empty)." };
 	}
 	const { error } = await resend.emails.send({ from: from(), to, subject, html });
-	if (error) throw new Error(`Email failed: ${error.message}`);
+	if (!error) return { delivered: true };
+	if (process.env.NODE_ENV !== "production") {
+		// Keep local testing possible: print the email and tell the caller it did not go out.
+		console.warn(`[email] not delivered (${error.message}); printing instead.\n[email] to=${to} subject="${subject}"\n${plain(html)}`);
+		return { delivered: false, reason: explain(error.message) };
+	}
+	throw new Error(`Email failed: ${error.message}`);
 }
+
+export const sendAdminLinkEmail = (to: string, kind: "invite" | "reset", url: string) =>
+	send(
+		to,
+		kind === "invite" ? `You have been invited to ${SITE_NAME} admin` : `Set a new ${SITE_NAME} admin password`,
+		layout(
+			kind === "invite" ? "Set up your admin account" : "Reset your password",
+			`<p style="line-height:1.6;color:#44544B">${kind === "invite" ? "You have been added as an election administrator. Choose a password to finish setting up your account." : "Use the button below to choose a new password. If you did not ask for this, ignore this email."} The link works once and expires in 1 hour.</p>
+<p style="margin:24px 0"><a href="${url}" style="display:inline-block;background:#0A6B3D;color:#ffffff;font-weight:700;text-decoration:none;padding:14px 22px;border-radius:12px">${kind === "invite" ? "Set my password" : "Choose a new password"}</a></p>`,
+		),
+	);
 
 export const sendVinEmail = (to: string, firstName: string, vin: string) =>
 	send(

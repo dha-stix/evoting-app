@@ -1,7 +1,7 @@
 "use client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
-import { Eye, EyeOff, Smartphone } from "lucide-react";
+import { Eye, EyeOff, MailCheck, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { OtpInput } from "@/components/ui/Bits";
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Field";
+import { requestAdminPasswordReset } from "@/lib/supabase-actions";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { adminLoginSchema } from "@/lib/validation";
 import type { z } from "zod";
@@ -17,7 +18,8 @@ import type { z } from "zod";
 export function LoginForm() {
 	const router = useRouter();
 	const params = useSearchParams();
-	const [step, setStep] = useState<"password" | "mfa">(params.get("step") === "mfa" ? "mfa" : "password");
+	const [step, setStep] = useState<"password" | "mfa" | "forgot" | "sent">(params.get("step") === "mfa" ? "mfa" : params.get("forgot") ? "forgot" : "password");
+	const [resetEmail, setResetEmail] = useState("");
 	const [showPw, setShowPw] = useState(false);
 	const [code, setCode] = useState("");
 	const [busy, setBusy] = useState(false);
@@ -85,6 +87,9 @@ export function LoginForm() {
 							</span>
 						)}
 					</Field>
+					<button type="button" onClick={() => (setResetEmail(form.getValues("email") ?? ""), setStep("forgot"))} className="-mt-2 self-end text-sm font-semibold text-brand hover:underline">
+						Forgot password?
+					</button>
 					<Button type="submit" size="lg" loading={busy} lift>
 						Continue
 					</Button>
@@ -92,6 +97,45 @@ export function LoginForm() {
 						Back to the public site
 					</Link>
 				</motion.form>
+			) : step === "forgot" ? (
+				<motion.form
+					key="forgot"
+					initial={{ opacity: 0, y: 12 }}
+					animate={{ opacity: 1, y: 0 }}
+					exit={{ opacity: 0, y: -12 }}
+					onSubmit={async (e) => {
+						e.preventDefault();
+						setBusy(true);
+						const res = await requestAdminPasswordReset(resetEmail);
+						setBusy(false);
+						if (!res.ok) return toast.error(res.error);
+						setStep("sent");
+					}}
+					className="flex flex-col gap-5"
+				>
+					<header>
+						<h1 className="h-display text-[32px] font-extrabold">Reset your password</h1>
+						<p className="mt-1.5 text-muted">Enter your admin email and we will send you a link to choose a new password.</p>
+					</header>
+					<Field label="Email">{(p) => <Input {...p} type="email" autoComplete="username" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} data-autofocus />}</Field>
+					<Button type="submit" size="lg" loading={busy} lift>
+						Send reset link
+					</Button>
+					<button type="button" onClick={() => setStep("password")} className="min-h-11 font-semibold text-brand">
+						Back to sign-in
+					</button>
+				</motion.form>
+			) : step === "sent" ? (
+				<motion.div key="sent" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} className="flex flex-col gap-5">
+					<span className="inline-flex h-14 w-14 items-center justify-center rounded-[18px] bg-brand-50 text-brand">
+						<MailCheck className="h-7 w-7" aria-hidden />
+					</span>
+					<h1 className="h-display text-[32px] font-extrabold">Check your email</h1>
+					<p className="text-muted">If <b>{resetEmail}</b> belongs to an admin, a link to set a new password is on its way. It expires in 1 hour.</p>
+					<button type="button" onClick={() => setStep("password")} className="min-h-11 self-start font-semibold text-brand">
+						Back to sign-in
+					</button>
+				</motion.div>
 			) : (
 				<motion.form key="mfa" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} onSubmit={(e) => (e.preventDefault(), onCode())} className="flex flex-col gap-5">
 					<span className="inline-flex h-14 w-14 items-center justify-center rounded-[18px] bg-brand-50 text-brand">

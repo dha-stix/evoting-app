@@ -21,7 +21,7 @@ export default async function AdminElectionsPage() {
 	const [admin, elections, candidates, eligible, { data: overview }] = await Promise.all([getCurrentAdmin(), getAdminElections(), getCandidates(), eligibleCounts(), db.rpc("admin_overview")]);
 	return (
 		<Suspense>
-			<ElectionsManager elections={elections} candidates={candidates} participation={overview?.participation ?? {}} eligible={eligible} canManage={admin?.role !== "observer"} />
+			<ElectionsManager elections={elections} candidates={candidates} participation={overview?.participation ?? {}} eligible={eligible} canManage={admin?.role !== "observer"} serverNow={Date.now()} />
 		</Suspense>
 	);
 }

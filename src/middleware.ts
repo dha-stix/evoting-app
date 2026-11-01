@@ -24,7 +24,8 @@ export async function middleware(request: NextRequest) {
 		data: { user },
 	} = await supabase.auth.getUser();
 
-	const isLogin = request.nextUrl.pathname.startsWith("/admin/login");
+	// Sign-in and the invite / password-reset landing page must open while signed out.
+	const isLogin = request.nextUrl.pathname.startsWith("/admin/login") || request.nextUrl.pathname.startsWith("/admin/set-password");
 	if (!user && !isLogin) {
 		const url = request.nextUrl.clone();
 		url.pathname = "/admin/login";

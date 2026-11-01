@@ -9,7 +9,8 @@ import { FaceCapture } from "@/components/face/FaceCapture";
 import { AnimatedCheck, CopyButton, Segmented } from "@/components/ui/Bits";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import { Field, Input, Select } from "@/components/ui/Field";
-import { DISTRICTS, ELECTION_STATE, LGA_DISTRICT, STATES, STATES_LGAS } from "@/lib/constants";
+import { DISTRICTS, ELECTION_STATE, LGA_DISTRICT, STATES, STATES_LGAS, districtLgaList } from "@/lib/constants";
+import { LgaOptions } from "@/components/ui/LgaOptions";
 import { checkRegistrationAvailability, registerVoter, startFaceChallenge } from "@/lib/supabase-actions";
 import { cn, formatDate } from "@/lib/utils";
 import { registrationSchema, type RegistrationInput } from "@/lib/validation";
@@ -29,7 +30,6 @@ const STEP_FIELDS: FieldPath<RegistrationInput>[][] = [
 	["consent"],
 ];
 
-const ONDO_LGAS = STATES_LGAS[ELECTION_STATE] ?? [];
 const slide = { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -24 }, transition: { duration: 0.3 } };
 
 export function RegisterFlow() {
@@ -200,11 +200,11 @@ export function RegisterFlow() {
 									<Field label="State of residence" hint={`Elections here are for ${ELECTION_STATE} State.`}>
 										{(p) => <Input {...p} value={ELECTION_STATE} readOnly className="bg-ground" />}
 									</Field>
-									<Field label="LGA of residence" error={errors.home_lga?.message}>
+									<Field label="LGA of residence" hint="Grouped by senatorial district" error={errors.home_lga?.message}>
 										{(p) => (
 											<Select {...p} {...register("home_lga")} defaultValue="">
 												<option value="" disabled>Choose an LGA</option>
-												{ONDO_LGAS.map((l) => <option key={l}>{l}</option>)}
+												<LgaOptions withHeadquarters />
 											</Select>
 										)}
 									</Field>
@@ -214,7 +214,7 @@ export function RegisterFlow() {
 										<motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="flex items-center gap-3.5 rounded-2xl bg-brand-50 px-[18px] py-4 text-forest">
 											<MapPin className="h-6 w-6 shrink-0" aria-hidden />
 											<span className="text-[15px] leading-snug">
-												You will vote in <b>{DISTRICTS[LGA_DISTRICT[homeLga]!]} senatorial district</b>. We worked this out from your LGA.
+												You will vote in <b>{DISTRICTS[LGA_DISTRICT[homeLga]!]} senatorial district</b>, which covers {districtLgaList(LGA_DISTRICT[homeLga]!)}. Only residents of these LGAs can vote for its senator.
 											</span>
 										</motion.div>
 									)}

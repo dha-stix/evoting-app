@@ -8,10 +8,11 @@ import { Segmented, StatusPill } from "@/components/ui/Bits";
 import { PartyBadge } from "@/components/ui/Brand";
 import { Button } from "@/components/ui/Button";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
-import { Drawer, Modal } from "@/components/ui/Overlay";
+import { Drawer, DrawerFooter, Modal } from "@/components/ui/Overlay";
 import { rankCandidates } from "@/components/results/TallyBars";
-import { DISTRICTS } from "@/lib/constants";
+import { DISTRICTS, districtLgaList } from "@/lib/constants";
 import { createElection, deleteElection, endElectionEarly, publishElection } from "@/lib/supabase-actions";
+import { formatWat, fromWatInput, toWatInput } from "@/lib/time";
 import { cn, countdown, formatDateTime, formatNumber, percent } from "@/lib/utils";
 import type { Candidate, District, ElectionStatus, ElectionType } from "@/types";
 import type { ElectionWithBallot } from "@/lib/queries";
@@ -25,22 +26,23 @@ const TABS: { value: ElectionStatus; label: string }[] = [
 	{ value: "ended", label: "Ended" },
 ];
 
-const toLocal = (d: Date) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
 
-export function ElectionsManager({ elections, candidates, participation, eligible, canManage }: { elections: Row[]; candidates: Candidate[]; participation: Record<string, number>; eligible: Record<string, number>; canManage: boolean }) {
+export function ElectionsManager({ elections, candidates, participation, eligible, canManage, serverNow }: { elections: Row[]; candidates: Candidate[]; participation: Record<string, number>; eligible: Record<string, number>; canManage: boolean; serverNow: number }) {
 	const router = useRouter();
 	const params = useSearchParams();
 	const counts = useMemo(() => Object.fromEntries(TABS.map((t) => [t.value, elections.filter((e) => e.status === t.value).length])), [elections]);
-	const [tab, setTab] = useState<ElectionStatus>(counts.live ? "live" : counts.scheduled ? "scheduled" : counts.draft ? "draft" : "ended");
+	const [tab, setTab] = useState<ElectionStatus>(counts.live ? "live" : counts.scheduled ? "scheduled" : counts.draft ? "draft" : counts.ended ? "ended" : "live");
 	const [creating, setCreating] = useState(params.get("new") === "1" && canManage);
 	const [ending, setEnding] = useState<Row | null>(null);
-	const [now, setNow] = useState(Date.now());
+	// Follow the server's clock even if this device's clock is wrong.
+	const [offset] = useState(() => serverNow - Date.now());
+	const [now, setNow] = useState(serverNow);
 	const [pending, startTransition] = useTransition();
 
 	useEffect(() => {
-		const id = setInterval(() => setNow(Date.now()), 1000);
+		const id = setInterval(() => setNow(Date.now() + offset), 1000);
 		return () => clearInterval(id);
-	}, []);
+	}, [offset]);
 
 	const run = (fn: () => Promise<{ ok: boolean; error?: string }>, success: string) =>
 		startTransition(async () => {
@@ -66,7 +68,7 @@ export function ElectionsManager({ elections, candidates, participation, eligibl
 					)
 				}
 			/>
-			<div className="mb-5 overflow-x-auto">
+			<div className="-mx-4 mb-5 overflow-x-auto px-4 pb-1 sm:mx-0 sm:px-0">
 				<Segmented label="Filter elections" value={tab} onChange={setTab} options={TABS.map((t) => ({ value: t.value, label: <span className="whitespace-nowrap">{t.label} <span className="ml-1 rounded-full bg-[#DDE4DC] px-1.5 py-0.5 text-xs">{counts[t.value]}</span></span> }))} />
 			</div>
 
@@ -143,7 +145,7 @@ export function ElectionsManager({ elections, candidates, participation, eligibl
 				</div>
 			)}
 
-			<CreateElectionDrawer open={creating} onClose={() => setCreating(false)} candidates={candidates} onCreated={() => (setCreating(false), router.refresh())} />
+			<CreateElectionDrawer open={creating} onClose={() => setCreating(false)} candidates={candidates} now={now} onCreated={() => (setCreating(false), router.refresh())} />
 
 			<Modal open={Boolean(ending)} onClose={() => setEnding(null)} title="End election early" role="alertdialog">
 				{ending && <EndEarly election={ending} onCancel={() => setEnding(null)} onDone={() => (setEnding(null), router.refresh())} />}
@@ -189,14 +191,23 @@ function EndEarly({ election, onCancel, onDone }: { election: Row; onCancel: () 
 	);
 }
 
-function CreateElectionDrawer({ open, onClose, candidates, onCreated }: { open: boolean; onClose: () => void; candidates: Candidate[]; onCreated: () => void }) {
+function CreateElectionDrawer({ open, onClose, candidates, now, onCreated }: { open: boolean; onClose: () => void; candidates: Candidate[]; now: number; onCreated: () => void }) {
 	const [type, setType] = useState<ElectionType>("governorship");
 	const [district, setDistrict] = useState<District>("central");
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [startNow, setStartNow] = useState(false);
-	const [startsAt, setStartsAt] = useState(() => toLocal(new Date(Date.now() + 86400000)));
-	const [endsAt, setEndsAt] = useState(() => toLocal(new Date(Date.now() + 86400000 + 10 * 3600000)));
+	// Default: tomorrow 8am to 6pm, Nigerian time.
+	const [startsAt, setStartsAt] = useState(() => `${toWatInput(now + 86400000).slice(0, 10)}T08:00`);
+	const [endsAt, setEndsAt] = useState(() => `${toWatInput(now + 86400000).slice(0, 10)}T18:00`);
+	const minStart = toWatInput(now);
+	const minEnd = toWatInput(Math.max(now, !startNow && startsAt ? fromWatInput(startsAt).getTime() || now : now) + 60 * 60_000);
+	const startInPast = !startNow && startsAt < minStart;
+	const changeStart = (value: string) => {
+		setStartsAt(value);
+		// Keep the closing time after the new opening time.
+		if (value && endsAt <= value) setEndsAt(toWatInput(fromWatInput(value).getTime() + 10 * 3600_000));
+	};
 	const [picked, setPicked] = useState<number[]>([]);
 	const [error, setError] = useState<{ field?: string; message: string } | null>(null);
 	const [busy, setBusy] = useState(false);
@@ -216,8 +227,9 @@ function CreateElectionDrawer({ open, onClose, candidates, onCreated }: { open: 
 			type,
 			district: type === "senatorial" ? district : null,
 			description,
-			starts_at: startNow ? new Date().toISOString() : new Date(startsAt).toISOString(),
-			ends_at: new Date(endsAt).toISOString(),
+			start_now: startNow,
+			starts_at: startNow ? undefined : startsAt,
+			ends_at: endsAt,
 			candidate_ids: picked,
 			is_draft: isDraft,
 		});
@@ -237,7 +249,7 @@ function CreateElectionDrawer({ open, onClose, candidates, onCreated }: { open: 
 					<Segmented label="Office" value={type} onChange={setType} options={[{ value: "governorship", label: "Governorship" }, { value: "senatorial", label: "Senatorial" }]} className="w-full" />
 				</div>
 				{type === "senatorial" && (
-					<Field label="District" error={errFor("district")}>
+					<Field label="District" hint={`Voters resident in ${districtLgaList(district)}`} error={errFor("district")}>
 						{(p) => (
 							<Select {...p} value={district} onChange={(e) => setDistrict(e.target.value as District)}>
 								{Object.entries(DISTRICTS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -246,15 +258,23 @@ function CreateElectionDrawer({ open, onClose, candidates, onCreated }: { open: 
 					</Field>
 				)}
 				<Field label="Title" error={errFor("title")}>{(p) => <Input {...p} value={title} onChange={(e) => setTitle(e.target.value)} />}</Field>
-				<Field label="Description" hint="Optional, shown on the results page">{(p) => <Textarea {...p} value={description} onChange={(e) => setDescription(e.target.value)} />}</Field>
+				<Field label="Description" hint="Optional, shown on the results page">{(p) => <Textarea {...p} rows={4} maxLength={500} placeholder="e.g. Election of the Governor of Ondo State for the 2027–2031 term" value={description} onChange={(e) => setDescription(e.target.value)} className="min-h-[120px]" />}</Field>
+				{type === "governorship" && <p className="-mt-2 rounded-xl bg-brand-50 px-3.5 py-3 text-sm text-forest">Open to registered voters in all 18 LGAs of Ondo State.</p>}
 				<label className="flex cursor-pointer items-center gap-3 rounded-xl border border-line p-3.5 font-semibold">
 					<input type="checkbox" checked={startNow} onChange={(e) => setStartNow(e.target.checked)} className="h-5 w-5 accent-brand" />
 					Open voting immediately
 				</label>
 				<div className="grid gap-3 sm:grid-cols-2">
-					{!startNow && <Field label="Opens" error={errFor("starts_at")}>{(p) => <Input {...p} type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} />}</Field>}
-					<Field label="Closes" error={errFor("ends_at")} className={cn(startNow && "sm:col-span-2")}>{(p) => <Input {...p} type="datetime-local" value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />}</Field>
+					{!startNow && (
+						<Field label="Opens (WAT)" error={errFor("starts_at") ?? (startInPast ? "Pick today or later, after the current time" : undefined)}>
+							{(p) => <Input {...p} type="datetime-local" min={minStart} value={startsAt} onChange={(e) => changeStart(e.target.value)} />}
+						</Field>
+					)}
+					<Field label="Closes (WAT)" error={errFor("ends_at")} className={cn(startNow && "sm:col-span-2")}>
+						{(p) => <Input {...p} type="datetime-local" min={minEnd} value={endsAt} onChange={(e) => setEndsAt(e.target.value)} />}
+					</Field>
 				</div>
+				<p className="-mt-2 text-[13px] text-subtle">Server time: {formatWat(now)}. Only today and later can be chosen.</p>
 				<fieldset className="flex flex-col gap-2.5">
 					<legend className="mb-2 text-sm font-semibold text-[#26362D]">Candidates on the ballot</legend>
 					{eligible.length === 0 ? (
@@ -273,14 +293,14 @@ function CreateElectionDrawer({ open, onClose, candidates, onCreated }: { open: 
 					{errFor("candidate_ids") && <p role="alert" className="text-[13px] font-medium text-danger">{errFor("candidate_ids")}</p>}
 				</fieldset>
 				{error && !error.field && <p role="alert" className="rounded-xl bg-danger-bg p-3 text-sm text-danger">{error.message}</p>}
-				<div className="mt-auto grid grid-cols-2 gap-2.5 pt-2">
-					<Button variant="secondary" size="lg" onClick={() => submit(true)} disabled={busy}>
+				<DrawerFooter>
+					<Button variant="secondary" size="lg" onClick={() => submit(true)} disabled={busy || startInPast}>
 						Save draft
 					</Button>
-					<Button size="lg" onClick={() => submit(false)} loading={busy}>
+					<Button size="lg" onClick={() => submit(false)} loading={busy} disabled={startInPast}>
 						{startNow ? "Start now" : "Schedule"}
 					</Button>
-				</div>
+				</DrawerFooter>
 			</div>
 		</Drawer>
 	);

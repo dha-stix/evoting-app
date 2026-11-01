@@ -1,10 +1,10 @@
 "use client";
 import { motion } from "framer-motion";
-import { BadgeCheck, Clock, Search, Trophy, Users, Vote } from "lucide-react";
+import { BadgeCheck, ChevronRight, Clock, Search, Trophy, Users, Vote } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { LiveDot, StatusPill } from "@/components/ui/Bits";
 import { Button } from "@/components/ui/Button";
-import { DISTRICTS } from "@/lib/constants";
+import { DISTRICTS, districtLgaList } from "@/lib/constants";
 import { checkReceipt } from "@/lib/supabase-actions";
 import { getBrowserClient } from "@/lib/supabase-browser";
 import { cn, countdown, electionStatus, formatDate, formatNumber, percent } from "@/lib/utils";
@@ -144,20 +144,44 @@ export function LiveResults({ elections: initial }: { elections: ResultsElection
 					<section className="card flex flex-col gap-4 rounded-[26px] p-[26px]">
 						<h2 className="h-display text-xl">Turnout by district</h2>
 						{turnout?.by_district.length ? (
-							turnout.by_district.map((d) => (
-								<div key={d.district} className="flex flex-col gap-1.5">
-									<div className="flex justify-between text-[15px]">
-										<span>{DISTRICTS[d.district]}</span>
-										<b className="tabular-nums">{percent(d.voted, d.eligible)}</b>
-									</div>
-									<div className="h-2 rounded-full bg-[#EEF2ED]">
-										<div className="h-full rounded-full bg-brand-500 transition-[width] duration-700" style={{ width: percent(d.voted, d.eligible) }} />
-									</div>
-								</div>
-							))
+							turnout.by_district.map((d) => {
+								const lgas = turnout.by_lga?.filter((l) => l.district === d.district) ?? [];
+								return (
+									<details key={d.district} className="group" open={turnout.by_district.length === 1}>
+										<summary className="flex cursor-pointer list-none flex-col gap-1.5 rounded-lg [&::-webkit-details-marker]:hidden">
+											<div className="flex justify-between gap-2 text-[15px]">
+												<span className="inline-flex items-center gap-1.5 font-semibold">
+													<ChevronRight className="h-4 w-4 text-subtle transition-transform group-open:rotate-90" aria-hidden />
+													{DISTRICTS[d.district]}
+												</span>
+												<b className="tabular-nums">{percent(d.voted, d.eligible)}</b>
+											</div>
+											<div className="h-2 rounded-full bg-[#EEF2ED]">
+												<div className="h-full rounded-full bg-brand-500 transition-[width] duration-700" style={{ width: percent(d.voted, d.eligible) }} />
+											</div>
+										</summary>
+										<ul className="mt-3 flex flex-col gap-2 border-l-2 border-line pl-3.5">
+											{lgas.map((l) => (
+												<li key={l.lga} className="flex flex-col gap-1">
+													<div className="flex justify-between gap-2 text-[13px]">
+														<span className="text-muted">{l.lga}</span>
+														<span className="tabular-nums text-subtle">
+															{formatNumber(l.voted)}/{formatNumber(l.eligible)} · <b className="text-ink">{percent(l.voted, l.eligible)}</b>
+														</span>
+													</div>
+													<div className="h-1.5 rounded-full bg-[#EEF2ED]">
+														<div className="h-full rounded-full bg-brand-300 transition-[width] duration-700" style={{ width: percent(l.voted, l.eligible) }} />
+													</div>
+												</li>
+											))}
+										</ul>
+									</details>
+								);
+							})
 						) : (
 							<p className="text-sm text-subtle">{turnout ? "No registered voters yet." : "Loading…"}</p>
 						)}
+						{selected.type === "senatorial" && selected.district && <p className="text-[13px] text-subtle">Only residents of {districtLgaList(selected.district)} can vote in this election.</p>}
 					</section>
 					<ReceiptCheck />
 				</aside>

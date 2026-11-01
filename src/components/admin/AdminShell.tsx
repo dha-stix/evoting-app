@@ -88,7 +88,7 @@ export function AdminShell({ admin, children }: { admin: Admin; children: React.
 					<Menu className="h-[22px] w-[22px]" />
 				</button>
 			</header>
-			<Drawer open={open} onClose={() => setOpen(false)} title="Admin menu" side="left" width={320} className="bg-forest p-4 text-white">
+			<Drawer open={open} onClose={() => setOpen(false)} title="Admin menu" side="left" width={320} tone="dark">
 				<div className="flex h-full flex-col gap-6">
 					<div className="flex items-center justify-between pl-2">
 						<Logo href="/admin" tone="light" label="ADMIN" />
