@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LoginForm } from "@/components/admin/LoginForm";
 import { Logo } from "@/components/ui/Brand";
+import { pageMeta } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Admin sign-in", robots: { index: false } };
+export const metadata: Metadata = pageMeta({ title: "Admin sign-in", path: "/admin/login", noindex: true, description: "Sign-in for AuthVote election officers." });
 
 export default function AdminLoginPage() {
 	return (

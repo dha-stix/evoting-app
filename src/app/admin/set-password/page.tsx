@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SetPasswordForm } from "@/components/admin/SetPasswordForm";
 import { Logo } from "@/components/ui/Brand";
+import { pageMeta } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Set your password", robots: { index: false } };
+export const metadata: Metadata = pageMeta({ title: "Set your password", path: "/admin/login", noindex: true, description: "Set up your AuthVote admin account." });
 
 export default function SetPasswordPage() {
 	return (

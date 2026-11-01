@@ -10,6 +10,7 @@ import { sendAdminLinkEmail, sendOtpEmail, sendVinEmail } from "./email";
 import { FACE, checkLiveness, faceMockEnabled, toPgVector } from "./face";
 import { clearVoterSession, readVoterSession, setVoterSession, signCardToken } from "./session";
 import { createServiceClient, createSessionClient, getCurrentAdmin } from "./supabase";
+import { getSiteUrl } from "./site";
 import { fromWatInput, startOfWatDay } from "./time";
 import { maskEmail } from "./utils";
 import {
@@ -665,7 +666,7 @@ export async function resendVin(id: string): Promise<ActionResult> {
 
 // Team -------------------------------------------------------------------
 
-const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const siteUrl = getSiteUrl;
 
 /** One-time link to the set-password page, built from a Supabase hashed token. */
 async function adminLink(type: "invite" | "recovery", email: string) {

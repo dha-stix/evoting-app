@@ -5,8 +5,9 @@ import { DISTRICTS, STORAGE } from "@/lib/constants";
 import { verifyCardToken } from "@/lib/session";
 import { createServiceClient } from "@/lib/supabase";
 import { formatDate, fullName } from "@/lib/utils";
+import { pageMeta } from "@/lib/site";
 
-export const metadata: Metadata = { title: "Verify a voter card", robots: { index: false } };
+export const metadata: Metadata = pageMeta({ title: "Verify a voter card", path: "/verify", noindex: true, description: "Confirm an AuthVote voter card is genuine by scanning its QR code." });
 export const dynamic = "force-dynamic";
 
 /** Landing page for the QR code on a voter card. */

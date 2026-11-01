@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
+import { DEFAULT_OG_IMAGE } from "@/lib/site";
 import { getCurrentAdmin } from "@/lib/supabase";
 
-export const metadata: Metadata = { title: { default: "Admin", template: "%s · AuthVote admin" }, robots: { index: false } };
+export const metadata: Metadata = { title: { default: "Admin", template: "%s · AuthVote admin" }, robots: { index: false, follow: false }, openGraph: { title: "AuthVote admin", description: "Election control centre for authorised officers.", siteName: "AuthVote", images: [DEFAULT_OG_IMAGE] } };
 export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
