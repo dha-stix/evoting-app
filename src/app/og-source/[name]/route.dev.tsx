@@ -3,7 +3,7 @@ import { loadPhoto, renderOg, type OgProps } from "@/lib/og";
 export const runtime = "edge";
 
 /**
- * Source designs for the static link-preview images in public/og. Run
+ * Source designs for the static link-preview images in public/og (dev only). Run
  * `npm run render-og` (with `npm run dev` running) after changing them; it
  * saves small JPEGs that WhatsApp and other apps reliably show.
  */

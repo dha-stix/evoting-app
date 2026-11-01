@@ -1,3 +1,5 @@
+import { PHASE_DEVELOPMENT_SERVER } from "next/constants.js";
+
 /** @type {import('next').NextConfig} */
 const supabaseHost = process.env.NEXT_PUBLIC_SUPABASE_URL
 	? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
@@ -38,4 +40,9 @@ const nextConfig = {
 	},
 };
 
-export default nextConfig;
+// Files named *.dev.tsx (the og-source preview designs) only exist under `npm run dev`,
+// so production builds never ship them.
+export default function config(phase) {
+	if (phase !== PHASE_DEVELOPMENT_SERVER) return nextConfig;
+	return { ...nextConfig, pageExtensions: ["tsx", "ts", "jsx", "js", "dev.tsx"] };
+}

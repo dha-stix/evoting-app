@@ -1,4 +1,5 @@
-// Renders the static link-preview images into public/og as small JPEGs.
+// Renders the static link-preview images into public/og as small JPEGs, using
+// the dev-only designs in src/app/og-source/[name]/route.dev.tsx.
 //   npm run dev        (in another terminal)
 //   npm run render-og
 // Large PNGs often do not show on WhatsApp, so the photo previews are saved as
